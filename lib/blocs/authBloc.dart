@@ -7,7 +7,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
   AuthBloc() : super(AuthInitial()) {
-    // Listen for authentication state changes
     _firebaseAuth.authStateChanges().listen((User? user) {
       if (user != null) {
         add(AuthUserLoggedIn(user: user)); 
@@ -16,7 +15,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     });
 
-    // Handle login requests
     on<AuthLoginRequested>((event, emit) async {
       emit(AuthLoading());
       try {
@@ -31,7 +29,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     });
 
-    // Handle registration requests
     on<AuthRegisterRequested>((event, emit) async {
       emit(AuthLoading());
       try {
@@ -47,25 +44,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthError(message: e.toString()));
       }
     });
-
-    // Handle logout requests
     on<AuthLogoutRequested>((event, emit) async {
       await _firebaseAuth.signOut();
-      // No need to emit a new state here, as authStateChanges will trigger AuthUserLoggedOut
     });
 
-    // Handle user logged in
     on<AuthUserLoggedIn>((event, emit) {
       emit(AuthAuthenticated(user: event.user));
     });
 
-    // Handle user logged out
     on<AuthUserLoggedOut>((event, emit) {
       emit(AuthInitial());
     });
   }
 
-  // Helper function for FirebaseAuth error messages
   String _getErrorMessage(String errorCode) {
     switch (errorCode) {
       case 'weak-password':

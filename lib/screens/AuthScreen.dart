@@ -23,10 +23,10 @@ class _AuthScreenState extends State<AuthScreen> {
       body: BlocListener<AuthBloc, AuthState>( 
         listener: (context, state) {
           if (state is AuthAuthenticated) {
-            // Navigate to home screen or the desired route
+      
             Navigator.pushReplacementNamed(context, '/home'); 
           } else if (state is AuthError) {
-            // Show error message to the user
+      
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),
             );
