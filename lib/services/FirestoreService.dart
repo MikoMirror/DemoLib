@@ -27,19 +27,22 @@ class FirestoreService {
     }
   }
 
-  Future<void> addBook(String collectionId, Book book) async { 
-    if (_userId != null) {
-      await _firestore
+  Future<void> addBook(String collectionId, Book book) async {
+    try {
+      print('Adding book: ${book.title} to collection: $collectionId'); // Debugging print
+      await _firestore 
           .collection('users')
-          .doc(_userId)
+          .doc(FirebaseAuth.instance.currentUser!.uid)
           .collection('collections')
           .doc(collectionId)
-          .collection('books')
+          .collection('books') // Check this line carefully
           .add(book.toFirestore()); 
-    } else {
-      print("Error: User not logged in while adding book"); 
+      print('Book added successfully!'); // Debugging print
+    } catch (e) {
+      print('Error adding book: $e');
     }
   }
+
 
   Stream<QuerySnapshot> getCollections() {
     if (_userId != null) {

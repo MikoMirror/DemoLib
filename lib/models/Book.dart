@@ -7,9 +7,10 @@ class Book {
   final String description;
   final String categories; 
   final int pageCount;
-  final DateTime? publishedDate;
+  final Timestamp? publishedDate; // Now a Timestamp?
+  final String? imageUrl;
 
-  Book({
+   Book({
     this.isbn,
     required this.title,
     required this.author,
@@ -17,6 +18,7 @@ class Book {
     this.categories = '', 
     this.pageCount = 0,   
     this.publishedDate, 
+    this.imageUrl, 
   });
 
   factory Book.fromFirestore(DocumentSnapshot doc) {
@@ -27,20 +29,22 @@ class Book {
       author: data['author'] ?? '',
       description: data['description'] ?? '',
       categories: data['categories'] ?? '',
-      pageCount: int.tryParse(data['page_count'] ?? '0') ?? 0,
-      publishedDate: (data['published_date'] as Timestamp?)?.toDate(),
+      pageCount: int.tryParse(data['page_count']?.toString() ?? '0') ?? 0,
+      publishedDate: data['published_date'] as Timestamp?, 
+      imageUrl: data['image_url'] as String?, 
     );
   }
 
-  Map<String, dynamic> toFirestore() {
-    return {
-      'isbn': isbn,
-      'title': title,
-      'author': author,
-      'description': description,
-      'categories': categories,
-      'page_count': pageCount.toString(),
-      'published_date': publishedDate,
-    };
-  }
+ Map<String, dynamic> toFirestore() {
+  return {
+    'isbn': isbn,
+    'title': title,
+    'author': author,
+    'description': description,
+    'categories': categories,
+    'page_count': pageCount, 
+    'published_date': publishedDate,
+    'image_url': imageUrl,
+  };
+}
 }

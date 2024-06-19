@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'collectionScreen.dart';
 
 class HomeScreen extends StatelessWidget {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -14,14 +13,6 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('My Collections'),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () {
-              Navigator.of(context).pushNamed('/addCollection');
-            },
-          ),
-        ],
       ),
       body: user != null
           ? StreamBuilder(
@@ -52,6 +43,12 @@ class HomeScreen extends StatelessWidget {
               },
             )
           : Center(child: Text('No user logged in')),
+          floatingActionButton: FloatingActionButton( 
+        onPressed: () {
+          Navigator.of(context).pushNamed('/addCollection');
+        },
+        child: Icon(Icons.add),
+      ),
     );
   }
 }
