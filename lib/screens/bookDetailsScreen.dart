@@ -17,7 +17,7 @@ class BookDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildBookCoverImage(),
+            _buildBookCoverImage(context),
             const SizedBox(height: 16),
             _buildBookDetailRow('Author:', book.author),
             _buildBookDetailRow('ISBN:', book.isbn ?? 'N/A'),
@@ -36,13 +36,15 @@ class BookDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBookCoverImage() {
+  Widget _buildBookCoverImage(BuildContext context) {
     if (book.imageUrl != null && book.imageUrl!.isNotEmpty) {
+      double screenHeight = MediaQuery.of(context).size.height;
+      double imageHeight = screenHeight * 0.4; 
       return Image.network(
         book.imageUrl!,
-        height: 200,
+        height: imageHeight,
         width: double.infinity,
-        fit: BoxFit.cover,
+        fit: BoxFit.contain, 
       );
     } else {
       return const SizedBox(height: 16);

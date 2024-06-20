@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage; // For mobile/desktop
 import 'package:firebase_storage/firebase_storage.dart';
 import '/services/FirestoreService.dart';
 import '/models/book.dart';
@@ -8,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 
 class AddBookScreen extends StatefulWidget {
   final String collectionId;
@@ -108,14 +110,33 @@ class _AddBookScreenState extends State<AddBookScreen> {
   }
 }
 
-  Future<String?> _uploadImageToStorage(File imageFile) async {
+   Future<String?> _uploadImageToStorage(Uint8List imageBytes) async {
     try {
       String fileName = DateTime.now().millisecondsSinceEpoch.toString();
-      Reference ref =
-          FirebaseStorage.instance.ref().child('book_covers/$fileName');
-      UploadTask uploadTask = ref.putFile(imageFile);
-      TaskSnapshot storageTaskSnapshot = await uploadTask.whenComplete(() {});
-      return await storageTaskSnapshot.ref.getDownloadURL();
+
+      if (kIsWeb) {
+        // Web Upload Logic:
+        firebase_storage.Reference storageRef = firebase_storage
+            .FirebaseStorage.instance
+            .ref()
+            .child('book_covers/$fileName.jpg');
+        final metadata = firebase_storage.SettableMetadata(
+            contentType: 'image/jpeg');
+        firebase_storage.UploadTask uploadTask =
+            storageRef.putData(imageBytes, metadata);
+        firebase_storage.TaskSnapshot storageTaskSnapshot =
+            await uploadTask.whenComplete(() {});
+        return await storageTaskSnapshot.ref.getDownloadURL();
+      } else {
+        // Mobile/Desktop Upload Logic:
+        Reference storageRef = FirebaseStorage.instance
+            .ref()
+            .child('book_covers/$fileName.jpg');
+        UploadTask uploadTask = storageRef.putFile(File(_selectedImage!.path));
+        TaskSnapshot storageTaskSnapshot =
+            await uploadTask.whenComplete(() {});
+        return await storageTaskSnapshot.ref.getDownloadURL();
+      }
     } catch (e) {
       print('Error uploading image: $e');
       return null;
@@ -123,29 +144,26 @@ class _AddBookScreenState extends State<AddBookScreen> {
   }
 
   void _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-
-      if (_selectedImage != null) {
-        _imageUrl = await _uploadImageToStorage(_selectedImage!);
-      }
-
-      Book newBook = Book(
-        title: _titleController.text,
-        author: _authorController.text,
-        isbn: _isbnController.text,
-        description: _descriptionController.text,
-        categories: _categoriesController.text,
-        pageCount: int.tryParse(_pageCountController.text) ?? 0,
-        publishedDate: _selectedDate,
-        imageUrl: _imageUrl,
-      );
-
-      _firestoreService.addBook(widget.collectionId, newBook);
-      _formKey.currentState!.reset();
-      Navigator.of(context).pop();
+  if (_formKey.currentState!.validate()) {
+    _formKey.currentState!.save();
+    if (_selectedImage != null) {
+      _imageUrl = await _uploadImageToStorage(_imageBytes!); 
     }
+    Book newBook = Book(
+      title: _titleController.text,
+      author: _authorController.text,
+      isbn: _isbnController.text,
+      description: _descriptionController.text,
+      categories: _categoriesController.text,
+      pageCount: int.tryParse(_pageCountController.text) ?? 0,
+      publishedDate: _selectedDate,
+      imageUrl: _imageUrl, 
+    );
+    _firestoreService.addBook(widget.collectionId, newBook);
+    _formKey.currentState!.reset();
+    Navigator.of(context).pop();
   }
+}
 
   @override
   Widget build(BuildContext context) {
