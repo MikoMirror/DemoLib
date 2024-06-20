@@ -7,7 +7,7 @@ class Book {
   final String description;
   final String categories; 
   final int pageCount;
-  final Timestamp? publishedDate; // Now a Timestamp?
+  final Timestamp? publishedDate; 
   final String? imageUrl;
 
    Book({

@@ -6,29 +6,20 @@ import '/services/FirestoreService.dart';
 import '/models/book.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:io';
+import 'dart:typed_data';
 
 class AddBookScreen extends StatefulWidget {
   final String collectionId;
   final String googleBooksApiKey;
-  final String initialTitle;
-  final String initialAuthor;
-  final String initialIsbn;
-  final String initialDescription;
-  final String initialCategories;
-  final int initialPageCount;
-  final Timestamp? initialPublishedDate;
+  final Book? initialBook;
 
-  AddBookScreen({
+  const AddBookScreen({
     required this.collectionId,
     required this.googleBooksApiKey,
-    this.initialTitle = '',
-    this.initialAuthor = '',
-    this.initialIsbn = '',
-    this.initialDescription = '',
-    this.initialCategories = '',
-    this.initialPageCount = 0,
-    this.initialPublishedDate,
-  });
+    this.initialBook,
+    Key? key,
+  }) : super(key: key);
 
   @override
   _AddBookScreenState createState() => _AddBookScreenState();
@@ -49,21 +40,12 @@ class _AddBookScreenState extends State<AddBookScreen> {
   Timestamp? _selectedDate;
   File? _selectedImage;
   String? _imageUrl;
+  Uint8List? _imageBytes;
 
   @override
   void initState() {
     super.initState();
-    _publishedDateController.text = widget.initialPublishedDate != null
-        ? DateFormat('yyyy-MM-dd').format(widget.initialPublishedDate!.toDate())
-        : DateFormat('yyyy-MM-dd').format(DateTime.now());
-
-    _titleController.text = widget.initialTitle;
-    _authorController.text = widget.initialAuthor;
-    _isbnController.text = widget.initialIsbn;
-    _descriptionController.text = widget.initialDescription;
-    _categoriesController.text = widget.initialCategories;
-    _pageCountController.text = widget.initialPageCount.toString();
-    _selectedDate = widget.initialPublishedDate;
+    _initializeTextControllers();
   }
 
   @override
@@ -78,14 +60,32 @@ class _AddBookScreenState extends State<AddBookScreen> {
     super.dispose();
   }
 
+  void _initializeTextControllers() {
+    final initialBook = widget.initialBook;
+
+    _titleController.text = initialBook?.title ?? '';
+    _authorController.text = initialBook?.author ?? '';
+    _isbnController.text = initialBook?.isbn ?? '';
+    _descriptionController.text = initialBook?.description ?? '';
+    _categoriesController.text = initialBook?.categories ?? '';
+    _pageCountController.text = initialBook?.pageCount.toString() ?? '';
+
+    _selectedDate = initialBook?.publishedDate;
+    _publishedDateController.text = initialBook?.publishedDate != null
+        ? DateFormat('yyyy-MM-dd')
+            .format(initialBook!.publishedDate!.toDate())
+        : DateFormat('yyyy-MM-dd').format(DateTime.now());
+  }
+
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate?.toDate() ?? DateTime.now(), // Use toDate()
+      initialDate: _selectedDate?.toDate() ?? DateTime.now(),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
-    if (picked != null && picked != _selectedDate?.toDate()) { // Use toDate()
+
+    if (picked != null && picked != _selectedDate?.toDate()) {
       setState(() {
         _selectedDate = Timestamp.fromDate(picked);
         _publishedDateController.text =
@@ -95,17 +95,18 @@ class _AddBookScreenState extends State<AddBookScreen> {
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+  final picker = ImagePicker();
+  final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+  if (pickedFile != null) {
+    Uint8List imageBytes = await pickedFile.readAsBytes(); 
 
     setState(() {
-      if (pickedFile != null) {
-        _selectedImage = File(pickedFile.path);
-      } else {
-        print('No image selected.');
-      }
+      _selectedImage = File(pickedFile.path); 
+      _imageBytes = imageBytes; 
     });
   }
+}
 
   Future<String?> _uploadImageToStorage(File imageFile) async {
     try {
@@ -114,8 +115,7 @@ class _AddBookScreenState extends State<AddBookScreen> {
           FirebaseStorage.instance.ref().child('book_covers/$fileName');
       UploadTask uploadTask = ref.putFile(imageFile);
       TaskSnapshot storageTaskSnapshot = await uploadTask.whenComplete(() {});
-      String downloadUrl = await storageTaskSnapshot.ref.getDownloadURL();
-      return downloadUrl;
+      return await storageTaskSnapshot.ref.getDownloadURL();
     } catch (e) {
       print('Error uploading image: $e');
       return null;
@@ -126,9 +126,8 @@ class _AddBookScreenState extends State<AddBookScreen> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      String? imageUrl;
       if (_selectedImage != null) {
-        imageUrl = await _uploadImageToStorage(_selectedImage!);
+        _imageUrl = await _uploadImageToStorage(_selectedImage!);
       }
 
       Book newBook = Book(
@@ -138,8 +137,8 @@ class _AddBookScreenState extends State<AddBookScreen> {
         description: _descriptionController.text,
         categories: _categoriesController.text,
         pageCount: int.tryParse(_pageCountController.text) ?? 0,
-        publishedDate: _selectedDate, 
-        imageUrl: imageUrl,
+        publishedDate: _selectedDate,
+        imageUrl: _imageUrl,
       );
 
       _firestoreService.addBook(widget.collectionId, newBook);
@@ -151,67 +150,70 @@ class _AddBookScreenState extends State<AddBookScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Add Book')),
+      appBar: AppBar(title: const Text('Add Book')),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: Column(children: <Widget>[
-             TextFormField(
-              controller: _titleController, 
-              decoration: InputDecoration(labelText: 'Title'),
-              validator: (value) => value!.isEmpty ? 'Please enter a title' : null,
-            ),
-            TextFormField(
-              controller: _authorController,
-              decoration: InputDecoration(labelText: 'Author'),
-              validator: (value) =>
-                  value!.isEmpty ? 'Please enter an author' : null,
-            ),
-            TextFormField(
-              controller: _isbnController,
-              decoration: InputDecoration(labelText: 'ISBN'),
-            ),
-            TextFormField(
-              controller: _descriptionController,
-              decoration: InputDecoration(labelText: 'Description'),
-              maxLines: 3,
-            ),
-            TextFormField(
-              controller: _categoriesController,
-              decoration: InputDecoration(labelText: 'Categories'),
-            ),
-            TextFormField(
-              controller: _pageCountController,
-              decoration: InputDecoration(labelText: 'Page Count'),
-              keyboardType: TextInputType.number,
-            ),
-            TextField(
-              controller: _publishedDateController,
-              decoration: InputDecoration(
-                labelText: 'Published Date',
-                suffixIcon: Icon(Icons.calendar_today),
+          child: Column(
+            children: <Widget>[
+              TextFormField(
+                controller: _titleController,
+                decoration: const InputDecoration(labelText: 'Title'),
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Please enter a title' : null,
               ),
-              readOnly: true,
-              onTap: () => _selectDate(context),
-            ),
-            SizedBox(height: 20),
-            _selectedImage != null
-                ? Image.file(_selectedImage!, height: 200.0, width: 200.0)
-                : Placeholder(fallbackHeight: 200.0, fallbackWidth: 200.0),
-            SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: _pickImage,
-              child: Text('Choose Image'),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              child: Text('Add Book'),
-              onPressed: _submitForm,
-            ),
-          ],
+              TextFormField(
+                controller: _authorController,
+                decoration: const InputDecoration(labelText: 'Author'),
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Please enter an author' : null,
+              ),
+              TextFormField(
+                controller: _isbnController,
+                decoration: const InputDecoration(labelText: 'ISBN'),
+              ),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(labelText: 'Description'),
+                maxLines: 3,
+              ),
+              TextFormField(
+                controller: _categoriesController,
+                decoration: const InputDecoration(labelText: 'Categories'),
+              ),
+              TextFormField(
+                controller: _pageCountController,
+                decoration: const InputDecoration(labelText: 'Page Count'),
+                keyboardType: TextInputType.number,
+              ),
+              TextField(
+                controller: _publishedDateController,
+                decoration: const InputDecoration(
+                  labelText: 'Published Date',
+                  suffixIcon: Icon(Icons.calendar_today),
+                ),
+                readOnly: true,
+                onTap: () => _selectDate(context),
+              ),
+               const SizedBox(height: 20),
+              _selectedImage != null
+                  ? Image.memory(_imageBytes!, height: 200.0, width: 200.0) // Use _imageBytes here
+                  : const Placeholder(fallbackHeight: 200.0, fallbackWidth: 200.0),
+              const SizedBox(height: 16.0),
+              ElevatedButton(
+                onPressed: _pickImage,
+                child: const Text('Choose Image'),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _submitForm,
+                child: const Text('Add Book'),
+              ),
+            ],
+          ),
         ),
       ),
-    ));
+    );
   }
 }

@@ -8,47 +8,53 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    User? user = _auth.currentUser;
+    final User? user = _auth.currentUser;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('My Collections'),
+        title: const Text('My Collections'),
       ),
-      body: user != null
-          ? StreamBuilder(
-              stream: _firestore
-                  .collection('users')
-                  .doc(user.uid)
-                  .collection('collections')
-                  .snapshots(),
-              builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                if (!snapshot.hasData) {
-                  return Center(child: CircularProgressIndicator());
-                }
-                return ListView(
-                  children: snapshot.data!.docs.map((doc) {
-                    return ListTile(
-                      title: Text(doc['name']),
-                      onTap: () {
-                    
-                        Navigator.pushNamed(
-                          context,
-                          '/collection',
-                          arguments: doc.id,
-                        );
-                      },
-                    );
-                  }).toList(),
-                );
-              },
-            )
-          : Center(child: Text('No user logged in')),
-          floatingActionButton: FloatingActionButton( 
+      body: _buildBody(context, user),
+      floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.of(context).pushNamed('/addCollection');
         },
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, User? user) {
+    if (user == null) {
+      return const Center(child: Text('No user logged in'));
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('collections')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        return ListView(
+          children: snapshot.data!.docs.map((doc) {
+            return ListTile(
+              title: Text(doc['name']),
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  '/collection',
+                  arguments: doc.id,
+                );
+              },
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }

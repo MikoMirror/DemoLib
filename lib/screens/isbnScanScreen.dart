@@ -1,17 +1,19 @@
-import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'dart:async';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'addBookScreen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; 
+
 import '/services/GoogleBooksService.dart';
+import 'addBookScreen.dart';
 
 class IsbnScanScreen extends StatefulWidget {
   final String collectionId;
   final String googleBooksApiKey;
 
-  IsbnScanScreen(
-      {required this.collectionId, required this.googleBooksApiKey});
+  const IsbnScanScreen({
+    required this.collectionId,
+    required this.googleBooksApiKey,
+    super.key,
+  });
 
   @override
   _IsbnScanScreenState createState() => _IsbnScanScreenState();
@@ -25,25 +27,24 @@ class _IsbnScanScreenState extends State<IsbnScanScreen> {
 
   final GoogleBooksService _googleBooksService = GoogleBooksService();
 
-  @override
+   @override
   void initState() {
     super.initState();
-    _initializeCamera();
+    if (!kIsWeb) { 
+      _initializeCamera();
+    }
   }
 
+
   Future<void> _initializeCamera() async {
-    try {
-      final cameras = await availableCameras();
-      if (cameras.isNotEmpty) {
-        final firstCamera = cameras.first;
-        _controller = CameraController(
-          firstCamera,
-          ResolutionPreset.medium,
-        );
-        _initializeControllerFuture = _controller!.initialize();
-      }
-    } catch (e) {
-      print('Error initializing camera: $e');
+    final cameras = await availableCameras();
+    if (cameras.isNotEmpty) {
+      final firstCamera = cameras.first;
+      _controller = CameraController(
+        firstCamera,
+        ResolutionPreset.medium,
+      );
+      _initializeControllerFuture = _controller!.initialize();
     }
   }
 
@@ -55,27 +56,28 @@ class _IsbnScanScreenState extends State<IsbnScanScreen> {
   }
 
   Future<void> _scanISBN() async {
-    try {
-      if (_controller != null) {
-        final image = await _controller!.takePicture();
-        setState(() {
-          _scannedIsbn = '978-3-16-148410-0'; 
-        });
-        print("Scanned ISBN: $_scannedIsbn");
+    if (_controller != null) {
+      final image = await _controller!.takePicture();
 
-        if (_scannedIsbn != null) {
-          _fetchBookDetails(_scannedIsbn!);
-        } 
+      // TODO: Implement actual ISBN scanning from image
+
+      // Placeholder ISBN for testing
+      setState(() {
+        _scannedIsbn = '978-3-16-148410-0';
+      });
+
+      if (_scannedIsbn != null) {
+        _fetchBookDetails(_scannedIsbn!);
       }
-    } catch (e) {
-      print('Error scanning ISBN: $e');
     }
   }
 
-   Future<void> _fetchBookDetails(String isbn) async {
+  Future<void> _fetchBookDetails(String isbn) async {
     try {
       final book = await _googleBooksService.getBookByISBN(
-          isbn, widget.googleBooksApiKey);
+        isbn,
+        widget.googleBooksApiKey,
+      );
 
       if (book != null) {
         Navigator.push(
@@ -84,82 +86,59 @@ class _IsbnScanScreenState extends State<IsbnScanScreen> {
             builder: (context) => AddBookScreen(
               collectionId: widget.collectionId,
               googleBooksApiKey: widget.googleBooksApiKey,
-              initialTitle: book.title,
-              initialAuthor: book.author,
-              initialIsbn: book.isbn ?? '',
-              initialDescription: book.description,
-              initialCategories: book.categories,
-              initialPageCount: book.pageCount,
-              initialPublishedDate: book.publishedDate,
+              initialBook: book, 
             ),
           ),
         );
       } else {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text("Error"),
-            content: Text("Book not found for ISBN: $isbn"),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text("OK"),
-              ),
-            ],
-          ),
-        );
+        _showBookNotFoundErrorDialog(isbn);
       }
     } catch (e) {
       print("Error fetching book details: $e");
     }
   }
 
-  @override
+  void _showBookNotFoundErrorDialog(String isbn) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Error"),
+        content: Text("Book not found for ISBN: $isbn"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
+   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Scan ISBN')),
-      body: _controller != null
-          ? FutureBuilder<void>(
-              future: _initializeControllerFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done) {
-                  return Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      CameraPreview(_controller!),
-                      Positioned(
-                        bottom: 20.0,
-                        child: ElevatedButton(
-                          onPressed: _scanISBN,
-                          child: Text('Scan'),
-                        ),
-                      ),
-                    ],
-                  );
-                } else {
-                  return Center(child: CircularProgressIndicator());
-                }
-              },
-            )
-          : Center(
+      appBar: AppBar(title: const Text('Scan ISBN')),
+      body:  
+         kIsWeb  
+          ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.no_photography,
                     size: 64.0,
                     color: Colors.grey,
                   ),
-                  SizedBox(height: 16.0),
-                  Text(
-                    'This device does not have access to the camera.',
+                  const SizedBox(height: 16.0),
+                  const Text(
+                    'ISBN scanning is not available on the web.',
                     textAlign: TextAlign.center,
                   ),
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: TextField(
                       controller: _isbnController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Enter ISBN manually',
                         border: OutlineInputBorder(),
                       ),
@@ -171,13 +150,41 @@ class _IsbnScanScreenState extends State<IsbnScanScreen> {
                       setState(() {
                         _scannedIsbn = _isbnController.text;
                       });
-                      _fetchBookDetails(_scannedIsbn!);
+                      if (_scannedIsbn != null) {
+                        _fetchBookDetails(_scannedIsbn!);
+                      }
                     },
-                    child: Text('Find Book'),
+                    child: const Text('Find Book'),
                   ),
                 ],
               ),
-            ),
+            )
+          : _controller != null
+              ? FutureBuilder<void>(
+                  future: _initializeControllerFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      return Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CameraPreview(_controller!),
+                          Positioned(
+                            bottom: 20.0,
+                            child: ElevatedButton(
+                              onPressed: _scanISBN,
+                              child: const Text('Scan'),
+                            ),
+                          ),
+                        ],
+                      );
+                    } else {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                  },
+                )
+              : const Center(
+                  child: Text('Camera initialization failed.'),
+                ),
     );
   }
 }

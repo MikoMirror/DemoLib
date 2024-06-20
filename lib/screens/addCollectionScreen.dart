@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import '../services/FirestoreService.dart';
 
 class AddCollectionScreen extends StatefulWidget {
+  const AddCollectionScreen({Key? key}) : super(key: key);
+
   @override
   _AddCollectionScreenState createState() => _AddCollectionScreenState();
 }
 
 class _AddCollectionScreenState extends State<AddCollectionScreen> {
   final _formKey = GlobalKey<FormState>();
-  final FirestoreService _firestoreService = FirestoreService(); 
+  final FirestoreService _firestoreService = FirestoreService();
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _descriptionController =
-      TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
 
   @override
   void dispose() {
@@ -22,9 +23,10 @@ class _AddCollectionScreenState extends State<AddCollectionScreen> {
 
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
       _firestoreService.addCollection(
-          _nameController.text, _descriptionController.text);
+        _nameController.text,
+        _descriptionController.text,
+      );
       Navigator.of(context).pop();
     }
   }
@@ -32,27 +34,27 @@ class _AddCollectionScreenState extends State<AddCollectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Add Collection')),
+      appBar: AppBar(title: const Text('Add Collection')),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: Column(
             children: <Widget>[
               TextFormField(
                 controller: _nameController,
-                decoration: InputDecoration(labelText: 'Name'),
+                decoration: const InputDecoration(labelText: 'Name'),
                 validator: (value) =>
-                    value!.isEmpty ? 'Please enter a name' : null,
+                    value == null || value.isEmpty ? 'Please enter a name' : null,
               ),
               TextFormField(
                 controller: _descriptionController,
-                decoration: InputDecoration(labelText: 'Description'),
+                decoration: const InputDecoration(labelText: 'Description'),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               ElevatedButton(
-                child: Text('Add Collection'),
                 onPressed: _submitForm,
+                child: const Text('Add Collection'),
               ),
             ],
           ),

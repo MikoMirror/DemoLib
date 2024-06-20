@@ -6,7 +6,6 @@ class FirestoreService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-
   String? get _userId { 
     return _auth.currentUser?.uid;
   }
@@ -29,20 +28,17 @@ class FirestoreService {
 
   Future<void> addBook(String collectionId, Book book) async {
     try {
-      print('Adding book: ${book.title} to collection: $collectionId'); // Debugging print
       await _firestore 
           .collection('users')
           .doc(FirebaseAuth.instance.currentUser!.uid)
           .collection('collections')
           .doc(collectionId)
-          .collection('books') // Check this line carefully
+          .collection('books') 
           .add(book.toFirestore()); 
-      print('Book added successfully!'); // Debugging print
     } catch (e) {
       print('Error adding book: $e');
     }
   }
-
 
   Stream<QuerySnapshot> getCollections() {
     if (_userId != null) {
