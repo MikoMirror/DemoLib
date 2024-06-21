@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/book.dart'; 
 import '../widgets/CustomAppBar.dart';
-import '../services/imageService.dart';
+import '../services/imgLoader/imageService.dart';
 
 class BookDetailsScreen extends StatelessWidget {
   final Book book;

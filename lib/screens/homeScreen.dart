@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/CustomAppBar.dart';
+import '../widgets/dialogs/AddCollectionDialog.dart';
+import '../widgets/dialogs/DeleteCollectionDialog.dart';
 
 class HomeScreen extends StatelessWidget {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -26,9 +28,7 @@ class HomeScreen extends StatelessWidget {
       ),
       body: _buildBody(context, user),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).pushNamed('/addCollection');
-        },
+        onPressed: () => _showAddCollectionDialog(context),
         child: const Icon(Icons.add),
         backgroundColor: Theme.of(context).colorScheme.secondary,
       ),
@@ -61,9 +61,12 @@ class HomeScreen extends StatelessWidget {
                     color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
-                trailing: Icon(
-                  Icons.arrow_forward_ios,
-                  color: Theme.of(context).iconTheme.color,
+                trailing: IconButton(
+                  icon: const Icon(
+                    Icons.delete,
+                    color: Colors.red,
+                  ),
+                  onPressed: () => _showDeleteCollectionDialog(context, user.uid, doc.id),
                 ),
                 onTap: () {
                   Navigator.pushNamed(
@@ -75,6 +78,27 @@ class HomeScreen extends StatelessWidget {
               ),
             );
           }).toList(),
+        );
+      },
+    );
+  }
+
+  void _showAddCollectionDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AddCollectionDialog(isDarkMode: isDarkMode);
+      },
+    );
+  }
+
+  void _showDeleteCollectionDialog(BuildContext context, String userId, String collectionId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return DeleteCollectionDialog(
+          userId: userId,
+          collectionId: collectionId,
         );
       },
     );

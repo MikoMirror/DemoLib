@@ -7,15 +7,19 @@ import 'isbnScanScreen.dart';
 import 'bookDetailsScreen.dart';
 import '../widgets/CustomAppBar.dart';
 import '../widgets/StylizedButton.dart';
-import '../services/ImageService.dart';
+import '../widgets/dialogs/deleteBookDialog.dart';
+import '../services/imgLoader/ImageService.dart';
+import '../services/FirestoreService.dart';
+import '../widgets/dialogs/AddBookDialog.dart';
 
 class CollectionScreen extends StatelessWidget {
   final String collectionId;
   final String googleBooksApiKey;
   final bool isDarkMode;
   final VoidCallback onThemeToggle;
+  final FirestoreService _firestoreService = FirestoreService();
 
-  const CollectionScreen({
+  CollectionScreen({
     required this.collectionId,
     required this.googleBooksApiKey,
     required this.isDarkMode,
@@ -77,20 +81,24 @@ class CollectionScreen extends StatelessWidget {
   }
 
   ListTile _buildBookListTile(BuildContext context, Book book) {
-  return ListTile(
-    leading: SizedBox(
-      width: 50,
-      height: 75,
-      child: ImageService.getImage(
-        book.imageUrl,
+    return ListTile(
+      leading: SizedBox(
         width: 50,
         height: 75,
+        child: ImageService.getImage(
+          book.imageUrl,
+          width: 50,
+          height: 75,
+        ),
       ),
-    ),
-    title: Text(book.title, style: Theme.of(context).textTheme.titleMedium),
-    subtitle: Text('${book.author} - Pages: ${book.pageCount}',
-        style: Theme.of(context).textTheme.bodyMedium),
-    onTap: () {
+      title: Text(book.title, style: Theme.of(context).textTheme.titleMedium),
+      subtitle: Text('${book.author} - Pages: ${book.pageCount}',
+          style: Theme.of(context).textTheme.bodyMedium),
+      trailing: IconButton(
+        icon: Icon(Icons.delete, color: Colors.red),
+        onPressed: () => _showDeleteBookDialog(context, book),
+      ),
+      onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -105,50 +113,26 @@ class CollectionScreen extends StatelessWidget {
     );
   }
 
-  
   Future<void> _showAddBookDialog(BuildContext context) async {
   await showDialog<void>(
     context: context,
     builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text('Add Book', style: Theme.of(context).textTheme.headlineSmall),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Text('How would you like to add a book?',
-                  style: Theme.of(context).textTheme.bodyMedium),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Flexible(
-                    child: StylizedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _navigateToManualAddBookScreen(context);
-                      },
-                      text: 'Write Manual',
-                      width: 150, // Set a constrained width
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Flexible(
-                    child: StylizedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _navigateToIsbnScanScreen(context);
-                      },
-                      text: 'ISBN Scan',
-                      width: 150, // Set a constrained width
-                    ),
-                  ),
-                ],
-              )
-            ],
-          ),
-        ),
-        backgroundColor: Theme.of(context).dialogBackgroundColor,
+      return AddBookDialog(
+        onManualAdd: () => _navigateToManualAddBookScreen(context),
+        onIsbnScan: () => _navigateToIsbnScanScreen(context),
+      );
+    },
+  );
+}
+
+ void _showDeleteBookDialog(BuildContext context, Book book) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return DeleteBookDialog(
+        book: book,
+        collectionId: collectionId,
+        firestoreService: _firestoreService,
       );
     },
   );

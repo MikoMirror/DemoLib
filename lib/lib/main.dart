@@ -6,7 +6,6 @@ import '../services/firebase_options.dart';
 import '../screens/authScreen.dart';
 import '../screens/homeScreen.dart';
 import '../screens/addBookScreen.dart';
-import '../screens/addCollectionScreen.dart';
 import '../screens/collectionScreen.dart';  
 import '../blocs/authBloc.dart';
 import 'package:flutter/foundation.dart';
@@ -58,7 +57,6 @@ class _MyAppState extends State<MyApp> {
     return {
       '/': (context) => AuthScreen(isDarkMode: _isDarkMode, onThemeToggle: _toggleTheme),
       '/home': (context) => HomeScreen(isDarkMode: _isDarkMode, onThemeToggle: _toggleTheme),
-      '/addCollection': (context) => AddCollectionScreen(isDarkMode: _isDarkMode, onThemeToggle: _toggleTheme),
       '/addBook': (context) => AddBookScreen(
             collectionId: _getCollectionId(context),
             googleBooksApiKey: widget.googleBooksApiKey,

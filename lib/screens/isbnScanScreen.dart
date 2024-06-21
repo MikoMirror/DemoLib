@@ -92,8 +92,8 @@ class _IsbnScanScreenState extends State<IsbnScanScreen> {
             collectionId: widget.collectionId,
             googleBooksApiKey: widget.googleBooksApiKey,
             initialBook: book,
-            isDarkMode: false, // Add this line
-            onThemeToggle: () {}, // Add this line
+            isDarkMode: false, 
+            onThemeToggle: () {}, 
           ),
         ),
       );
