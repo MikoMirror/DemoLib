@@ -24,6 +24,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="flutterlibdata">
+
+  <!--Web meta-->
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src * self blob: data: gap:; style-src * self 'unsafe-inline' blob: data: gap:; script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; object-src * 'self' blob: data: gap:; img-src * self 'unsafe-inline' blob: data: gap:; connect-src self * 'unsafe-inline' blob: data: gap:; frame-src * self blob: data: gap:;">
+  
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
@@ -31,7 +36,7 @@
 
   <title>flutterlibdata</title>
   <link rel="manifest" href="manifest.json">
-
+  <script src="https://www.gstatic.com/firebasejs/8.2.10/firebase-firestore.js"></script>
   <script>
     // The value below is injected by flutter build, do not touch.
     const serviceWorkerVersion = null;

@@ -48,15 +48,20 @@ class BookDetailsScreen extends StatelessWidget {
   }
 
   Widget _buildBookCoverImage(BuildContext context) {
-    double screenHeight = MediaQuery.of(context).size.height;
-    double imageHeight = screenHeight * 0.4;
-    
-    return ImageService.getImage(
+  double screenHeight = MediaQuery.of(context).size.height;
+  double imageHeight = screenHeight * 0.4;
+
+  return Container(
+    height: imageHeight,
+    width: double.infinity,
+    alignment: Alignment.center,
+    child: ImageService.getImage(
       book.imageUrl,
       height: imageHeight,
-      width: double.infinity,
-    );
-  }
+      width: null, // Set to null to allow the image to determine its own width
+    ), // Center the image within the container
+  );
+}
 
   Widget _buildBookDetailRow(String label, String value) {
     return Column(
