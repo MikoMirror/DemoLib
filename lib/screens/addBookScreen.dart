@@ -10,16 +10,21 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
+import '../widgets/CustomAppBar.dart';
 
 class AddBookScreen extends StatefulWidget {
   final String collectionId;
   final String googleBooksApiKey;
   final Book? initialBook;
+  final bool isDarkMode;
+  final VoidCallback onThemeToggle;
 
   const AddBookScreen({
     required this.collectionId,
     required this.googleBooksApiKey,
     this.initialBook,
+    required this.isDarkMode,
+    required this.onThemeToggle,
     Key? key,
   }) : super(key: key);
 
@@ -165,73 +170,117 @@ class _AddBookScreenState extends State<AddBookScreen> {
   }
 }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Add Book')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: <Widget>[
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Please enter a title' : null,
+
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: CustomAppBar(
+      title: 'Add Book',
+      isDarkMode: widget.isDarkMode,
+      onThemeToggle: widget.onThemeToggle,
+    ),
+    body: SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: <Widget>[
+            TextFormField(
+              controller: _titleController,
+              decoration: InputDecoration(
+                labelText: 'Title',
+                labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
               ),
-              TextFormField(
-                controller: _authorController,
-                decoration: const InputDecoration(labelText: 'Author'),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Please enter an author' : null,
+              style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+              validator: (value) =>
+                  value == null || value.isEmpty ? 'Please enter a title' : null,
+            ),
+            TextFormField(
+              controller: _authorController,
+              decoration: InputDecoration(
+                labelText: 'Author',
+                labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
               ),
-              TextFormField(
-                controller: _isbnController,
-                decoration: const InputDecoration(labelText: 'ISBN'),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+              validator: (value) =>
+                  value == null || value.isEmpty ? 'Please enter an author' : null,
+            ),
+            TextFormField(
+              controller: _isbnController,
+              decoration: InputDecoration(
+                labelText: 'ISBN',
+                labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
               ),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'Description'),
-                maxLines: 3,
+              style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+            ),
+            TextFormField(
+              controller: _descriptionController,
+              decoration: InputDecoration(
+                labelText: 'Description',
+                labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
               ),
-              TextFormField(
-                controller: _categoriesController,
-                decoration: const InputDecoration(labelText: 'Categories'),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+              maxLines: 3,
+            ),
+            TextFormField(
+              controller: _categoriesController,
+              decoration: InputDecoration(
+                labelText: 'Categories',
+                labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
               ),
-              TextFormField(
-                controller: _pageCountController,
-                decoration: const InputDecoration(labelText: 'Page Count'),
-                keyboardType: TextInputType.number,
+              style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+            ),
+            TextFormField(
+              controller: _pageCountController,
+              decoration: InputDecoration(
+                labelText: 'Page Count',
+                labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
               ),
-              TextField(
-                controller: _publishedDateController,
-                decoration: const InputDecoration(
-                  labelText: 'Published Date',
-                  suffixIcon: Icon(Icons.calendar_today),
-                ),
-                readOnly: true,
-                onTap: () => _selectDate(context),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              controller: _publishedDateController,
+              decoration: InputDecoration(
+                labelText: 'Published Date',
+                labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+                suffixIcon: Icon(Icons.calendar_today, color: Theme.of(context).iconTheme.color),
               ),
-               const SizedBox(height: 20),
-              _selectedImage != null
-                  ? Image.memory(_imageBytes!, height: 200.0, width: 200.0) // Use _imageBytes here
-                  : const Placeholder(fallbackHeight: 200.0, fallbackWidth: 200.0),
-              const SizedBox(height: 16.0),
-              ElevatedButton(
-                onPressed: _pickImage,
-                child: const Text('Choose Image'),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+              readOnly: true,
+              onTap: () => _selectDate(context),
+            ),
+            const SizedBox(height: 20),
+            _selectedImage != null
+                ? Image.memory(_imageBytes!, height: 200.0, width: 200.0)
+                : Container(
+                    height: 200.0,
+                    width: 200.0,
+                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                    child: Icon(Icons.image, color: Theme.of(context).colorScheme.secondary),
+                  ),
+            const SizedBox(height: 16.0),
+            ElevatedButton(
+              onPressed: _pickImage,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
               ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _submitForm,
-                child: const Text('Add Book'),
+              child: const Text('Choose Image'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _submitForm,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
               ),
-            ],
-          ),
+              child: const Text('Add Book'),
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

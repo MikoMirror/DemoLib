@@ -4,14 +4,19 @@ import 'package:flutter/foundation.dart';
 
 import '/services/GoogleBooksService.dart';
 import 'addBookScreen.dart';
+import '../widgets/CustomAppBar.dart';
 
 class IsbnScanScreen extends StatefulWidget {
   final String collectionId;
   final String googleBooksApiKey;
+  final bool isDarkMode;
+  final VoidCallback onThemeToggle;
 
   const IsbnScanScreen({
     required this.collectionId,
     required this.googleBooksApiKey,
+    required this.isDarkMode,
+    required this.onThemeToggle,
     super.key,
   });
 
@@ -73,30 +78,32 @@ class _IsbnScanScreenState extends State<IsbnScanScreen> {
   }
 
   Future<void> _fetchBookDetails(String isbn) async {
-    try {
-      final book = await _googleBooksService.getBookByISBN(
-        isbn,
-        widget.googleBooksApiKey,
-      );
+  try {
+    final book = await _googleBooksService.getBookByISBN(
+      isbn,
+      widget.googleBooksApiKey,
+    );
 
-      if (book != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => AddBookScreen(
-              collectionId: widget.collectionId,
-              googleBooksApiKey: widget.googleBooksApiKey,
-              initialBook: book, 
-            ),
+    if (book != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AddBookScreen(
+            collectionId: widget.collectionId,
+            googleBooksApiKey: widget.googleBooksApiKey,
+            initialBook: book,
+            isDarkMode: false, // Add this line
+            onThemeToggle: () {}, // Add this line
           ),
-        );
-      } else {
-        _showBookNotFoundErrorDialog(isbn);
-      }
-    } catch (e) {
-      print("Error fetching book details: $e");
+        ),
+      );
+    } else {
+      _showBookNotFoundErrorDialog(isbn);
     }
+  } catch (e) {
+    print("Error fetching book details: $e");
   }
+}
 
   void _showBookNotFoundErrorDialog(String isbn) {
     showDialog(
@@ -117,7 +124,11 @@ class _IsbnScanScreenState extends State<IsbnScanScreen> {
    @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Scan ISBN')),
+      appBar: CustomAppBar(
+      title: 'Scan ISBN',
+      isDarkMode: widget.isDarkMode,
+      onThemeToggle: widget.onThemeToggle,
+    ),
       body:  
          kIsWeb  
           ? Center(

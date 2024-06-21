@@ -3,29 +3,41 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../services/firebase_options.dart';
-import '../screens/authScreen.dart'; 
-import '../screens/homeScreen.dart'; 
-import '../screens/addBookScreen.dart'; 
-import '../screens/addCollectionScreen.dart'; 
+import '../screens/authScreen.dart';
+import '../screens/homeScreen.dart';
+import '../screens/addBookScreen.dart';
+import '../screens/addCollectionScreen.dart';
 import '../screens/collectionScreen.dart';  
-import '../blocs/authBloc.dart'; 
-import 'package:flutter/foundation.dart'; 
+import '../blocs/authBloc.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import '../services/appTheme.dart'; 
 
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await dotenv.load(fileName: "assets/.env");
-
   runApp(MyApp(googleBooksApiKey: dotenv.env['GOOGLE_BOOKS_API_KEY'] ?? ''));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final String googleBooksApiKey;
-
   const MyApp({Key? key, required this.googleBooksApiKey}) : super(key: key);
+
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool _isDarkMode = false;
+
+  void _toggleTheme() {
+    setState(() {
+      _isDarkMode = !_isDarkMode;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,9 +45,9 @@ class MyApp extends StatelessWidget {
       create: (context) => AuthBloc(),
       child: MaterialApp(
         title: 'Flutter Home Library',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-        ),
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
         initialRoute: '/',
         routes: _buildRoutes(context),
       ),
@@ -44,16 +56,20 @@ class MyApp extends StatelessWidget {
 
   Map<String, WidgetBuilder> _buildRoutes(BuildContext context) {
     return {
-      '/': (context) => AuthScreen(),
-      '/home': (context) => HomeScreen(),
-      '/addCollection': (context) => AddCollectionScreen(),
+      '/': (context) => AuthScreen(isDarkMode: _isDarkMode, onThemeToggle: _toggleTheme),
+      '/home': (context) => HomeScreen(isDarkMode: _isDarkMode, onThemeToggle: _toggleTheme),
+      '/addCollection': (context) => AddCollectionScreen(isDarkMode: _isDarkMode, onThemeToggle: _toggleTheme),
       '/addBook': (context) => AddBookScreen(
             collectionId: _getCollectionId(context),
-            googleBooksApiKey: googleBooksApiKey,
+            googleBooksApiKey: widget.googleBooksApiKey,
+            isDarkMode: _isDarkMode,
+            onThemeToggle: _toggleTheme,
           ),
       '/collection': (context) => CollectionScreen(
             collectionId: _getCollectionId(context),
-            googleBooksApiKey: googleBooksApiKey,
+            googleBooksApiKey: widget.googleBooksApiKey,
+            isDarkMode: _isDarkMode,
+            onThemeToggle: _toggleTheme,
           ),
     };
   }

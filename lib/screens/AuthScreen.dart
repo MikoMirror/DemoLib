@@ -4,13 +4,24 @@ import '../blocs/authBloc.dart';
 import '../blocs/authEvent.dart';
 import '../blocs/authState.dart';
 import 'registrationScreen.dart';
+import '../widgets/StylizedTextField.dart';
+import '../widgets/CustomAppBar.dart';
+import '../widgets/stylizedButton.dart';
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({Key? key}) : super(key: key);
+  final bool isDarkMode;
+  final VoidCallback onThemeToggle;
+
+  const AuthScreen({
+    Key? key,
+    required this.isDarkMode,
+    required this.onThemeToggle,
+  }) : super(key: key);
 
   @override
   _AuthScreenState createState() => _AuthScreenState();
 }
+
 
 class _AuthScreenState extends State<AuthScreen> {
   final TextEditingController _emailController = TextEditingController();
@@ -19,8 +30,10 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
+      appBar: CustomAppBar(
+        title: 'Login',
+        isDarkMode: widget.isDarkMode,
+        onThemeToggle: widget.onThemeToggle,
       ),
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
@@ -38,19 +51,22 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Widget _buildLoginForm(BuildContext context) {
-    return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, state) {
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
+  return BlocBuilder<AuthBloc, AuthState>(
+    builder: (context, state) {
+      return Container(
+        color: Theme.of(context).scaffoldBackgroundColor, 
+        child: Padding(
+          padding: const EdgeInsets.all(100.0),
           child: Column(
             children: [
-              TextField(
+              StylizedTextField(
                 controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
+                labelText: 'Email',
               ),
-              TextField(
+              const SizedBox(height: 20),
+              StylizedTextField(
                 controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Password'),
+                labelText: 'Password',
                 obscureText: true,
               ),
               const SizedBox(height: 20),
@@ -58,35 +74,44 @@ class _AuthScreenState extends State<AuthScreen> {
               _buildRegistrationLink(),
             ],
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
-  Widget _buildLoginButton(BuildContext context, AuthState state) {
-    return state is AuthLoading
-        ? const CircularProgressIndicator()
-        : ElevatedButton(
-            onPressed: () {
-              context.read<AuthBloc>().add(
-                    AuthLoginRequested(
-                      _emailController.text,
-                      _passwordController.text,
-                    ),
-                  );
-            },
-            child: const Text('Login'),
-          );
-  }
-
-  Widget _buildRegistrationLink() {
-    return TextButton(
-      onPressed: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => const RegistrationScreen()),
+Widget _buildLoginButton(BuildContext context, AuthState state) {
+  return state is AuthLoading
+      ? const CircularProgressIndicator(color: Colors.white)
+      : StylizedButton(
+          onPressed: () {
+            context.read<AuthBloc>().add(
+                  AuthLoginRequested(
+                    _emailController.text,
+                    _passwordController.text,
+                  ),
+                );
+          },
+          text: 'Login',
         );
-      },
-      child: const Text('Don\'t have an account? Register'),
-    );
-  }
+}
+
+Widget _buildRegistrationLink() {
+  return TextButton(
+    onPressed: () {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => RegistrationScreen(
+            isDarkMode: widget.isDarkMode,
+            onThemeToggle: widget.onThemeToggle,
+          ),
+        ),
+      );
+    },
+    child: Text(
+      'Don\'t have an account? Register',
+      style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+    ),
+  );
+}
 }

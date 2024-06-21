@@ -1,16 +1,27 @@
 import 'package:flutter/material.dart';
 import '../models/book.dart'; 
+import '../widgets/CustomAppBar.dart';
+import '../services/imageService.dart';
 
 class BookDetailsScreen extends StatelessWidget {
   final Book book;
+  final bool isDarkMode;
+  final VoidCallback onThemeToggle;
 
-  const BookDetailsScreen({Key? key, required this.book}) : super(key: key);
+  const BookDetailsScreen({
+    Key? key,
+    required this.book,
+    required this.isDarkMode,
+    required this.onThemeToggle,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(book.title),
+     appBar: CustomAppBar(
+        title: 'Book Details',
+        isDarkMode: isDarkMode,
+        onThemeToggle: onThemeToggle,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -37,18 +48,14 @@ class BookDetailsScreen extends StatelessWidget {
   }
 
   Widget _buildBookCoverImage(BuildContext context) {
-    if (book.imageUrl != null && book.imageUrl!.isNotEmpty) {
-      double screenHeight = MediaQuery.of(context).size.height;
-      double imageHeight = screenHeight * 0.4; 
-      return Image.network(
-        book.imageUrl!,
-        height: imageHeight,
-        width: double.infinity,
-        fit: BoxFit.contain, 
-      );
-    } else {
-      return const SizedBox(height: 16);
-    }
+    double screenHeight = MediaQuery.of(context).size.height;
+    double imageHeight = screenHeight * 0.4;
+    
+    return ImageService.getImage(
+      book.imageUrl,
+      height: imageHeight,
+      width: double.infinity,
+    );
   }
 
   Widget _buildBookDetailRow(String label, String value) {

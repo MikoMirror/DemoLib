@@ -4,9 +4,19 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/authBloc.dart';
 import '../blocs/authEvent.dart';
 import '../blocs/authState.dart';
+import '../widgets/CustomAppBar.dart';
+import '../widgets/StylizedTextField.dart';
+import '../widgets/StylizedButton.dart';
 
 class RegistrationScreen extends StatefulWidget {
-  const RegistrationScreen({Key? key}) : super(key: key);
+  final bool isDarkMode;
+  final VoidCallback onThemeToggle;
+
+  const RegistrationScreen({
+    Key? key,
+    required this.isDarkMode,
+    required this.onThemeToggle,
+  }) : super(key: key);
 
   @override
   _RegistrationScreenState createState() => _RegistrationScreenState();
@@ -29,7 +39,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Register')),
+      appBar: CustomAppBar(
+        title: 'Register',
+        isDarkMode: widget.isDarkMode,
+        onThemeToggle: widget.onThemeToggle,
+      ),
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
@@ -41,20 +55,23 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           }
         },
         builder: (context, state) {
-          return Form(
-            key: _formKey,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  _buildEmailField(),
-                  const SizedBox(height: 16),
-                  _buildPasswordField(),
-                  const SizedBox(height: 16),
-                  _buildConfirmPasswordField(),
-                  const SizedBox(height: 24),
-                  _buildRegisterButton(state),
-                ],
+          return Container(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            child: Form(
+              key: _formKey,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    _buildEmailField(),
+                    const SizedBox(height: 16),
+                    _buildPasswordField(),
+                    const SizedBox(height: 16),
+                    _buildConfirmPasswordField(),
+                    const SizedBox(height: 24),
+                    _buildRegisterButton(state),
+                  ],
+                ),
               ),
             ),
           );
@@ -64,9 +81,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   }
 
   Widget _buildEmailField() {
-    return TextFormField(
+    return StylizedTextField(
       controller: _emailController,
-      decoration: const InputDecoration(labelText: 'Email'),
+      labelText: 'Email',
       validator: (value) => value == null || value.isEmpty
           ? 'Please enter an email'
           : null,
@@ -74,9 +91,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   }
 
   Widget _buildPasswordField() {
-    return TextFormField(
+    return StylizedTextField(
       controller: _passwordController,
-      decoration: const InputDecoration(labelText: 'Password'),
+      labelText: 'Password',
       obscureText: true,
       validator: (value) => value == null || value.isEmpty
           ? 'Please enter a password'
@@ -85,9 +102,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   }
 
   Widget _buildConfirmPasswordField() {
-    return TextFormField(
+    return StylizedTextField(
       controller: _confirmPasswordController,
-      decoration: const InputDecoration(labelText: 'Confirm Password'),
+      labelText: 'Confirm Password',
       obscureText: true,
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -103,7 +120,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   Widget _buildRegisterButton(AuthState state) {
     return state is AuthLoading
         ? const CircularProgressIndicator()
-        : ElevatedButton(
+        : StylizedButton(
             onPressed: () {
               if (_formKey.currentState!.validate()) {
                 context.read<AuthBloc>().add(
@@ -114,7 +131,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     );
               }
             },
-            child: const Text('Register'),
+            text: 'Register',
           );
   }
 }
