@@ -1,7 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import '/models/book.dart'; 
+import '../models/book.dart'; 
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io';
+import 'dart:typed_data';
 
 class FirestoreService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -28,17 +31,77 @@ class FirestoreService {
     }
   }
 
-  Future<void> addBook(String collectionId, Book book) async {
+  Future<String?> uploadImageToStorage(dynamic imageData) async {
+    if (_userId == null) {
+      throw Exception("User not logged in");
+    }
+
     try {
-      await _firestore 
+      String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+      Reference storageRef = _storage.ref().child('book_covers/$fileName.jpg');
+      UploadTask uploadTask;
+
+      if (kIsWeb) {
+        // Web Upload Logic
+        uploadTask = storageRef.putData(
+          imageData,
+          SettableMetadata(contentType: 'image/jpeg'),
+        );
+      } else if (imageData is File) {
+        // Mobile/Desktop Upload Logic for File
+        uploadTask = storageRef.putFile(imageData);
+      } else if (imageData is Uint8List) {
+        // Mobile/Desktop Upload Logic for Uint8List
+        uploadTask = storageRef.putData(imageData);
+      } else {
+        throw ArgumentError('Unsupported image data type');
+      }
+
+      TaskSnapshot storageTaskSnapshot = await uploadTask;
+      String downloadUrl = await storageTaskSnapshot.ref.getDownloadURL();
+      
+      print("Image uploaded successfully. URL: $downloadUrl");
+      return downloadUrl;
+    } catch (e) {
+      print('Error uploading image: $e');
+      return null;
+    }
+  }
+
+  Future<void> addBook(String collectionId, Book book) async {
+    if (_userId == null) {
+      throw Exception("User not logged in");
+    }
+
+    try {
+      if (book.localImageUrl != null) {
+        String? uploadedImageUrl = await uploadImageToStorage(book.localImageUrl!);
+        if (uploadedImageUrl != null) {
+          book = Book(
+            id: book.id,
+            isbn: book.isbn,
+            title: book.title,
+            author: book.author,
+            description: book.description,
+            categories: book.categories,
+            pageCount: book.pageCount,
+            publishedDate: book.publishedDate,
+            externalImageUrl: book.externalImageUrl,
+            localImageUrl: uploadedImageUrl,
+          );
+        }
+      }
+
+      await _firestore
           .collection('users')
-          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .doc(_userId)
           .collection('collections')
           .doc(collectionId)
-          .collection('books') 
-          .add(book.toFirestore()); 
+          .collection('books')
+          .add(book.toFirestore());
     } catch (e) {
       print('Error adding book: $e');
+      throw Exception('Failed to add book: $e');
     }
   }
 

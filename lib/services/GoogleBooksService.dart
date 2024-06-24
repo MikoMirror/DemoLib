@@ -26,25 +26,23 @@ class GoogleBooksService {
 
   Book? _extractBookDataFromJson(String jsonResponse) {
     final Map<String, dynamic> jsonData = json.decode(jsonResponse);
-
     if (jsonData['totalItems'] > 0) {
       final volumeInfo = jsonData['items'][0]['volumeInfo'];
       String? isbn = _extractIsbn(volumeInfo['industryIdentifiers']);
-
       return Book(
         title: volumeInfo['title'] ?? '',
         author: (volumeInfo['authors'] != null && volumeInfo['authors'].isNotEmpty)
-                ? volumeInfo['authors'][0] 
-                : '',
+            ? volumeInfo['authors'].join(', ')
+            : '',
         isbn: isbn,
         description: volumeInfo['description'] ?? '',
         categories: (volumeInfo['categories'] != null && volumeInfo['categories'].isNotEmpty)
-                ? volumeInfo['categories'].join(', ')
-                : '',
+            ? volumeInfo['categories'].join(', ')
+            : '',
         pageCount: volumeInfo['pageCount'] ?? 0,
-        imageUrl: volumeInfo['imageLinks'] != null 
-                ? volumeInfo['imageLinks']['thumbnail'] ?? ''
-                : '',
+        externalImageUrl: volumeInfo['imageLinks'] != null
+            ? volumeInfo['imageLinks']['thumbnail'] ?? ''
+            : null,
         publishedDate: _parsePublishedDate(volumeInfo['publishedDate']),
       );
     } else {
@@ -52,40 +50,36 @@ class GoogleBooksService {
     }
   }
 
-  String? _extractIsbn(List<dynamic>? identifiers) {
-    if (identifiers != null) {
-      for (var identifier in identifiers) {
-        if (identifier['type'] == 'ISBN_13') {
-          return identifier['identifier'];
-        }
-      }
-      for (var identifier in identifiers) {
-        if (identifier['type'] == 'ISBN_10') {
-          return identifier['identifier'];
-        }
-      }
-    }
-    return null;
-  }
-
   Timestamp? _parsePublishedDate(String? dateString) {
-    if (dateString == null) {
-      return null;
-    }
-
+    if (dateString == null) return null;
     try {
-      DateTime? parsedDate;
+      DateTime date;
       if (dateString.length == 4) {
-        parsedDate = DateTime(int.parse(dateString));
+        date = DateTime(int.parse(dateString));
       } else if (dateString.length == 7) {
-        parsedDate = DateTime.parse('${dateString}-01');
+        var parts = dateString.split('-');
+        date = DateTime(int.parse(parts[0]), int.parse(parts[1]));
       } else {
-        parsedDate = DateTime.parse(dateString);
+        date = DateTime.parse(dateString);
       }
-      return parsedDate != null ? Timestamp.fromDate(parsedDate) : null;
+      return Timestamp.fromDate(date);
     } catch (e) {
       print('Error parsing date: $e');
       return null;
     }
+  }
+
+  String? _extractIsbn(List<dynamic>? identifiers) {
+    if (identifiers == null) return null;
+    var isbn13 = identifiers.firstWhere(
+      (id) => id['type'] == 'ISBN_13',
+      orElse: () => null,
+    );
+    if (isbn13 != null) return isbn13['identifier'];
+    var isbn10 = identifiers.firstWhere(
+      (id) => id['type'] == 'ISBN_10',
+      orElse: () => null,
+    );
+    return isbn10 != null ? isbn10['identifier'] : null;
   }
 }

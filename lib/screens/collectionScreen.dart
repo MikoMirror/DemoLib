@@ -11,6 +11,7 @@ import '../widgets/dialogs/deleteBookDialog.dart';
 import '../services/imgLoader/ImageService.dart';
 import '../services/FirestoreService.dart';
 import '../widgets/dialogs/AddBookDialog.dart';
+import '../widgets/bookImageWidget.dart';
 
 class CollectionScreen extends StatelessWidget {
   final String collectionId;
@@ -81,37 +82,38 @@ class CollectionScreen extends StatelessWidget {
   }
 
   ListTile _buildBookListTile(BuildContext context, Book book) {
-    return ListTile(
-      leading: SizedBox(
+  return ListTile(
+    leading: SizedBox(
+      width: 50,
+      height: 75,
+      child: BookImageWidget(
+        book: book,
         width: 50,
         height: 75,
-        child: ImageService.getImage(
-          book.imageUrl,
-          width: 50,
-          height: 75,
-        ),
       ),
-      title: Text(book.title, style: Theme.of(context).textTheme.titleMedium),
-      subtitle: Text('${book.author} - Pages: ${book.pageCount}',
-          style: Theme.of(context).textTheme.bodyMedium),
-      trailing: IconButton(
-        icon: Icon(Icons.delete, color: Colors.red),
-        onPressed: () => _showDeleteBookDialog(context, book),
-      ),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BookDetailsScreen(
-              book: book,
-              isDarkMode: isDarkMode,
-              onThemeToggle: onThemeToggle,
-            ),
+    ),
+    title: Text(book.title, style: Theme.of(context).textTheme.titleMedium),
+    subtitle: Text('${book.author} - Pages: ${book.pageCount}',
+        style: Theme.of(context).textTheme.bodyMedium),
+    trailing: IconButton(
+      icon: Icon(Icons.delete, color: Colors.red),
+      onPressed: () => _showDeleteBookDialog(context, book),
+    ),
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BookDetailsScreen(
+            book: book,
+            isDarkMode: isDarkMode,
+            onThemeToggle: onThemeToggle,
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
+
 
   Future<void> _showAddBookDialog(BuildContext context) async {
   await showDialog<void>(

@@ -88,15 +88,15 @@ class _IsbnScanScreenState extends State<IsbnScanScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => AddBookScreen(
-            collectionId: widget.collectionId,
-            googleBooksApiKey: widget.googleBooksApiKey,
-            initialBook: book,
-            isDarkMode: false, 
-            onThemeToggle: () {}, 
-          ),
+        builder: (context) => AddBookScreen(
+          collectionId: widget.collectionId,
+          googleBooksApiKey: widget.googleBooksApiKey,
+          initialBook: book,
+          isDarkMode: widget.isDarkMode,
+          onThemeToggle: widget.onThemeToggle,
         ),
-      );
+      ),
+    );
     } else {
       _showBookNotFoundErrorDialog(isbn);
     }

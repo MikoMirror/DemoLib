@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Book {
-  final String? id;  // Add this line
+  final String? id;
   final String? isbn;
   final String title;
   final String author;
@@ -9,24 +9,26 @@ class Book {
   final String categories;
   final int pageCount;
   final Timestamp? publishedDate;
-  final String? imageUrl;
+  final String? externalImageUrl;
+  final String? localImageUrl;
 
   Book({
-    this.id,  // Add this line
+    this.id,
     this.isbn,
     required this.title,
     required this.author,
     this.description = '',
     this.categories = '',
-    this.pageCount = 0,  
+    this.pageCount = 0,
     this.publishedDate,
-    this.imageUrl,
+    this.externalImageUrl,
+    this.localImageUrl,
   });
 
   factory Book.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     return Book(
-      id: doc.id,  // Add this line
+      id: doc.id,
       isbn: data['isbn'],
       title: data['title'] ?? '',
       author: data['author'] ?? '',
@@ -34,7 +36,8 @@ class Book {
       categories: data['categories'] ?? '',
       pageCount: int.tryParse(data['page_count']?.toString() ?? '0') ?? 0,
       publishedDate: data['published_date'] as Timestamp?,
-      imageUrl: data['imageUrl'] as String?,
+      externalImageUrl: data['external_image_url'],
+      localImageUrl: data['local_image_url'],
     );
   }
 
@@ -47,7 +50,8 @@ class Book {
       'categories': categories,
       'page_count': pageCount,
       'published_date': publishedDate,
-      'imageUrl': imageUrl,
+      'external_image_url': externalImageUrl,
+      'local_image_url': localImageUrl,
     };
   }
 }

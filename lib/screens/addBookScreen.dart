@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:firebase_storage/firebase_storage.dart';
 import '/services/FirestoreService.dart';
-import '/models/book.dart';
+import '../models/book.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:typed_data';
@@ -12,6 +12,7 @@ import 'package:flutter/foundation.dart';
 import '../widgets/CustomAppBar.dart';
 import '../widgets/StylizedTextField.dart';
 import '../widgets/StylizedButton.dart';
+import '../widgets/bookImageWidget.dart';
 
 class AddBookScreen extends StatefulWidget {
   final String collectionId;
@@ -79,9 +80,9 @@ class _AddBookScreenState extends State<AddBookScreen> {
     _pageCountController.text = initialBook?.pageCount.toString() ?? '';
 
     _selectedDate = initialBook?.publishedDate;
+    _imageUrl = initialBook?.externalImageUrl;  
     _publishedDateController.text = initialBook?.publishedDate != null
-        ? DateFormat('yyyy-MM-dd')
-            .format(initialBook!.publishedDate!.toDate())
+        ? DateFormat('yyyy-MM-dd').format(initialBook!.publishedDate!.toDate())
         : DateFormat('yyyy-MM-dd').format(DateTime.now());
   }
 
@@ -116,45 +117,48 @@ class _AddBookScreenState extends State<AddBookScreen> {
   }
 }
 
-   Future<String?> _uploadImageToStorage(Uint8List imageBytes) async {
-    try {
-      String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+  Future<String?> _uploadImageToStorage(Uint8List imageBytes) async {
+  try {
+    String fileName = DateTime.now().millisecondsSinceEpoch.toString();
 
-      if (kIsWeb) {
-        // Web Upload Logic:
-        firebase_storage.Reference storageRef = firebase_storage
-            .FirebaseStorage.instance
-            .ref()
-            .child('book_covers/$fileName.jpg');
-        final metadata = firebase_storage.SettableMetadata(
-            contentType: 'image/jpeg');
-        firebase_storage.UploadTask uploadTask =
-            storageRef.putData(imageBytes, metadata);
-        firebase_storage.TaskSnapshot storageTaskSnapshot =
-            await uploadTask.whenComplete(() {});
-        return await storageTaskSnapshot.ref.getDownloadURL();
-      } else {
-        // Mobile/Desktop Upload Logic:
-        Reference storageRef = FirebaseStorage.instance
-            .ref()
-            .child('book_covers/$fileName.jpg');
-        UploadTask uploadTask = storageRef.putFile(File(_selectedImage!.path));
-        TaskSnapshot storageTaskSnapshot =
-            await uploadTask.whenComplete(() {});
-        return await storageTaskSnapshot.ref.getDownloadURL();
-      }
-    } catch (e) {
-      print('Error uploading image: $e');
-      return null;
+    if (kIsWeb) {
+      // Web Upload Logic:
+      firebase_storage.Reference storageRef = firebase_storage
+          .FirebaseStorage.instance
+          .ref()
+          .child('book_covers/$fileName.jpg');
+      final metadata =
+          firebase_storage.SettableMetadata(contentType: 'image/jpeg');
+      firebase_storage.UploadTask uploadTask =
+          storageRef.putData(imageBytes, metadata);
+      firebase_storage.TaskSnapshot storageTaskSnapshot =
+          await uploadTask.whenComplete(() {});
+      return await storageTaskSnapshot.ref.getDownloadURL();
+    } else {
+      // Mobile/Desktop Upload Logic:
+      Reference storageRef =
+          FirebaseStorage.instance.ref().child('book_covers/$fileName.jpg');
+      UploadTask uploadTask = storageRef.putFile(File(_selectedImage!.path));
+      TaskSnapshot storageTaskSnapshot = await uploadTask.whenComplete(() {});
+      return await storageTaskSnapshot.ref.getDownloadURL();
     }
+  } catch (e) {
+    print('Error uploading image: $e');
+    return null;
   }
+}
 
-  void _submitForm() async {
+ void _submitForm() async {
   if (_formKey.currentState!.validate()) {
     _formKey.currentState!.save();
+    
+    String? imageUrl;
     if (_selectedImage != null) {
-      _imageUrl = await _uploadImageToStorage(_imageBytes!); 
+      imageUrl = await _uploadImageToStorage(_imageBytes!);
+    } else if (widget.initialBook?.externalImageUrl != null) {
+      imageUrl = widget.initialBook!.externalImageUrl;
     }
+
     Book newBook = Book(
       title: _titleController.text,
       author: _authorController.text,
@@ -163,13 +167,16 @@ class _AddBookScreenState extends State<AddBookScreen> {
       categories: _categoriesController.text,
       pageCount: int.tryParse(_pageCountController.text) ?? 0,
       publishedDate: _selectedDate,
-      imageUrl: _imageUrl, 
+      externalImageUrl: imageUrl,
     );
-    _firestoreService.addBook(widget.collectionId, newBook);
+
+    await _firestoreService.addBook(widget.collectionId, newBook);
     _formKey.currentState!.reset();
-    Navigator.of(context).pop();
+    Navigator.of(context).pop(true);
+    Navigator.of(context).pop(true);
   }
 }
+
 
 
  @override
@@ -186,18 +193,30 @@ class _AddBookScreenState extends State<AddBookScreen> {
           key: _formKey,
           child: Column(
             children: <Widget>[
+              if (widget.initialBook != null || _selectedImage != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: _selectedImage != null
+                      ? Image.memory(_imageBytes!, height: 200.0, width: 200.0)
+                      : BookImageWidget(
+                          book: widget.initialBook!,
+                          height: 200,
+                        ),
+                ),
               StylizedTextField(
                 controller: _titleController,
                 labelText: 'Title',
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Please enter a title' : null,
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Please enter a title'
+                    : null,
               ),
               const SizedBox(height: 16),
               StylizedTextField(
                 controller: _authorController,
                 labelText: 'Author',
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Please enter an author' : null,
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Please enter an author'
+                    : null,
               ),
               const SizedBox(height: 16),
               StylizedTextField(
@@ -224,15 +243,6 @@ class _AddBookScreenState extends State<AddBookScreen> {
                 controller: _publishedDateController,
                 labelText: 'Published Date',
               ),
-              const SizedBox(height: 20),
-              _selectedImage != null
-                  ? Image.memory(_imageBytes!, height: 200.0, width: 200.0)
-                  : Container(
-                      height: 200.0,
-                      width: 200.0,
-                      color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
-                      child: Icon(Icons.image, color: Theme.of(context).colorScheme.secondary),
-                    ),
               const SizedBox(height: 16.0),
               StylizedButton(
                 onPressed: _pickImage,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/book.dart'; 
 import '../widgets/CustomAppBar.dart';
 import '../services/imgLoader/imageService.dart';
+import '../widgets/bookImageWidget.dart';
 
 class BookDetailsScreen extends StatelessWidget {
   final Book book;
@@ -50,16 +51,14 @@ class BookDetailsScreen extends StatelessWidget {
   Widget _buildBookCoverImage(BuildContext context) {
   double screenHeight = MediaQuery.of(context).size.height;
   double imageHeight = screenHeight * 0.4;
-
   return Container(
     height: imageHeight,
     width: double.infinity,
     alignment: Alignment.center,
-    child: ImageService.getImage(
-      book.imageUrl,
+    child: BookImageWidget(
+      book: book,
       height: imageHeight,
-      width: null, // Set to null to allow the image to determine its own width
-    ), // Center the image within the container
+    ),
   );
 }
 
