@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import '../models/book.dart'; 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io';
@@ -9,7 +8,6 @@ import 'dart:typed_data';
 class FirestoreService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   String? get _userId { 
     return _auth.currentUser?.uid;
@@ -31,67 +29,13 @@ class FirestoreService {
     }
   }
 
-  Future<String?> uploadImageToStorage(dynamic imageData) async {
+
+   Future<void> addBook(String collectionId, Book book) async {
     if (_userId == null) {
       throw Exception("User not logged in");
     }
 
     try {
-      String fileName = DateTime.now().millisecondsSinceEpoch.toString();
-      Reference storageRef = _storage.ref().child('book_covers/$fileName.jpg');
-      UploadTask uploadTask;
-
-      if (kIsWeb) {
-        // Web Upload Logic
-        uploadTask = storageRef.putData(
-          imageData,
-          SettableMetadata(contentType: 'image/jpeg'),
-        );
-      } else if (imageData is File) {
-        // Mobile/Desktop Upload Logic for File
-        uploadTask = storageRef.putFile(imageData);
-      } else if (imageData is Uint8List) {
-        // Mobile/Desktop Upload Logic for Uint8List
-        uploadTask = storageRef.putData(imageData);
-      } else {
-        throw ArgumentError('Unsupported image data type');
-      }
-
-      TaskSnapshot storageTaskSnapshot = await uploadTask;
-      String downloadUrl = await storageTaskSnapshot.ref.getDownloadURL();
-      
-      print("Image uploaded successfully. URL: $downloadUrl");
-      return downloadUrl;
-    } catch (e) {
-      print('Error uploading image: $e');
-      return null;
-    }
-  }
-
-  Future<void> addBook(String collectionId, Book book) async {
-    if (_userId == null) {
-      throw Exception("User not logged in");
-    }
-
-    try {
-      if (book.localImageUrl != null) {
-        String? uploadedImageUrl = await uploadImageToStorage(book.localImageUrl!);
-        if (uploadedImageUrl != null) {
-          book = Book(
-            id: book.id,
-            isbn: book.isbn,
-            title: book.title,
-            author: book.author,
-            description: book.description,
-            categories: book.categories,
-            pageCount: book.pageCount,
-            publishedDate: book.publishedDate,
-            externalImageUrl: book.externalImageUrl,
-            localImageUrl: uploadedImageUrl,
-          );
-        }
-      }
-
       await _firestore
           .collection('users')
           .doc(_userId)
@@ -136,7 +80,8 @@ class FirestoreService {
       );
     }
   }
-  Future<void> removeCollection(String collectionId) async {
+
+ Future<void> removeCollection(String collectionId) async {
     if (_userId != null) {
       QuerySnapshot booksSnapshot = await _firestore
           .collection('users')
@@ -159,54 +104,25 @@ class FirestoreService {
     }
   }
 
- Future<void> removeBook(String collectionId, String bookId) async {
-  if (_userId == null) {
-    throw Exception("User not logged in");
-  }
+  Future<void> removeBook(String collectionId, String bookId) async {
+    if (_userId == null) {
+      throw Exception("User not logged in");
+    }
   
-  try {
-    DocumentSnapshot bookDoc = await _firestore
-        .collection('users')
-        .doc(_userId)
-        .collection('collections')
-        .doc(collectionId)
-        .collection('books')
-        .doc(bookId)
-        .get();
+    try {
+      await _firestore
+          .collection('users')
+          .doc(_userId)
+          .collection('collections')
+          .doc(collectionId)
+          .collection('books')
+          .doc(bookId)
+          .delete();
 
-    if (!bookDoc.exists) {
-      throw Exception("Book not found");
+      print("Book document deleted successfully");
+    } catch (e) {
+      print("Error removing book: $e");
+      throw Exception("Failed to remove book: $e");
     }
-
-    Map<String, dynamic> bookData = bookDoc.data() as Map<String, dynamic>;
-    String? imageUrl = bookData['imageUrl'] as String?;
-    if (imageUrl != null && imageUrl.isNotEmpty) {
-      try {
-        print("Attempting to delete image: $imageUrl");
-        Reference ref = FirebaseStorage.instance.refFromURL(imageUrl);
-        await ref.delete();
-        print("Book cover image deleted successfully: $imageUrl");
-      } catch (e) {
-        print("Error deleting book cover image: $e");
-       
-      }
-    } else {
-      print("No image URL found for the book");
-    }
-
-    await _firestore
-        .collection('users')
-        .doc(_userId)
-        .collection('collections')
-        .doc(collectionId)
-        .collection('books')
-        .doc(bookId)
-        .delete();
-
-    print("Book document deleted successfully");
-  } catch (e) {
-    print("Error removing book: $e");
-    throw Exception("Failed to remove book: $e");
   }
-}
 }
