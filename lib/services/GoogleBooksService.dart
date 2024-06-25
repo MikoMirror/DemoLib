@@ -8,12 +8,10 @@ class GoogleBooksService {
 
   Future<Book?> getBookByISBN(String isbn, String apiKey) async {
     final url = '$_baseUrl?q=isbn:$isbn&key=$apiKey';
-
     try {
       final response = await http.get(Uri.parse(url));
-
       if (response.statusCode == 200) {
-        return _extractBookDataFromJson(response.body);
+        return _extractBookDataFromJson(response.body, isbn);
       } else {
         print('Google Books API request failed. Status Code: ${response.statusCode}');
         return null;
@@ -24,11 +22,11 @@ class GoogleBooksService {
     }
   }
 
-  Book? _extractBookDataFromJson(String jsonResponse) {
+  Book? _extractBookDataFromJson(String jsonResponse, String isbn) {
     final Map<String, dynamic> jsonData = json.decode(jsonResponse);
     if (jsonData['totalItems'] > 0) {
       final volumeInfo = jsonData['items'][0]['volumeInfo'];
-      String? isbn = _extractIsbn(volumeInfo['industryIdentifiers']);
+      String coverUrl = getOpenLibraryCoverUrl(isbn, 'L'); 
       return Book(
         title: volumeInfo['title'] ?? '',
         author: (volumeInfo['authors'] != null && volumeInfo['authors'].isNotEmpty)
@@ -40,14 +38,16 @@ class GoogleBooksService {
             ? volumeInfo['categories'].join(', ')
             : '',
         pageCount: volumeInfo['pageCount'] ?? 0,
-        externalImageUrl: volumeInfo['imageLinks'] != null
-            ? volumeInfo['imageLinks']['thumbnail'] ?? ''
-            : null,
+        externalImageUrl: coverUrl,
         publishedDate: _parsePublishedDate(volumeInfo['publishedDate']),
       );
     } else {
       return null;
     }
+  }
+
+  String getOpenLibraryCoverUrl(String isbn, String size) {
+    return 'https://covers.openlibrary.org/b/isbn/$isbn-$size.jpg';
   }
 
   Timestamp? _parsePublishedDate(String? dateString) {

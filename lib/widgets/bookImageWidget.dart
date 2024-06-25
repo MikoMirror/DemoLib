@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/book.dart';
-import '../services/imgLoader/imageService.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class BookImageWidget extends StatelessWidget {
   final Book book;
@@ -16,20 +16,25 @@ class BookImageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String? imageUrl = book.localImageUrl ?? book.externalImageUrl;
-    if (imageUrl != null && imageUrl.isNotEmpty) {
-      return ImageService.getImage(
-        imageUrl,
+    return CachedNetworkImage(
+      imageUrl: book.externalImageUrl ?? '',
+      width: width,
+      height: height,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => Container(
         width: width,
         height: height,
-      );
-    } else {
-      return Container(
+        color: Colors.grey[300],
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      ),
+      errorWidget: (context, url, error) => Container(
         width: width,
         height: height,
         color: Colors.grey[300],
         child: Icon(Icons.book, color: Colors.grey[600]),
-      );
-    }
+      ),
+    );
   }
 }
