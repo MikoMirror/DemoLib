@@ -10,7 +10,6 @@ class Book {
   final int pageCount;
   final Timestamp? publishedDate;
   final String? externalImageUrl;
-  final String? localImageUrl;
 
   Book({
     this.id,
@@ -22,7 +21,6 @@ class Book {
     this.pageCount = 0,
     this.publishedDate,
     this.externalImageUrl,
-    this.localImageUrl,
   });
 
   factory Book.fromFirestore(DocumentSnapshot doc) {
@@ -37,7 +35,6 @@ class Book {
       pageCount: int.tryParse(data['page_count']?.toString() ?? '0') ?? 0,
       publishedDate: data['published_date'] as Timestamp?,
       externalImageUrl: data['external_image_url'],
-      localImageUrl: data['local_image_url'],
     );
   }
 
@@ -51,7 +48,6 @@ class Book {
       'page_count': pageCount,
       'published_date': publishedDate,
       'external_image_url': externalImageUrl,
-      'local_image_url': localImageUrl,
     };
   }
 }
