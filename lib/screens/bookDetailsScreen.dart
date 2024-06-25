@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/book.dart'; 
 import '../widgets/CustomAppBar.dart';
-import '../services/imgLoader/imageService.dart';
 import '../widgets/bookImageWidget.dart';
 
 class BookDetailsScreen extends StatelessWidget {
@@ -19,7 +18,7 @@ class BookDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-     appBar: CustomAppBar(
+      appBar: CustomAppBar(
         title: 'Book Details',
         isDarkMode: isDarkMode,
         onThemeToggle: onThemeToggle,
@@ -29,8 +28,8 @@ class BookDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildBookCoverImage(context),
-            const SizedBox(height: 16),
+            _buildBookCoverAndTitle(context),
+            const SizedBox(height: 24),
             _buildBookDetailRow('Author:', book.author),
             _buildBookDetailRow('ISBN:', book.isbn ?? 'N/A'),
             _buildBookDetailRow('Pages:', book.pageCount.toString()),
@@ -48,17 +47,48 @@ class BookDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBookCoverImage(BuildContext context) {
+  Widget _buildBookCoverAndTitle(BuildContext context) {
   double screenHeight = MediaQuery.of(context).size.height;
   double imageHeight = screenHeight * 0.4;
-  return Container(
-    height: imageHeight,
-    width: double.infinity,
-    alignment: Alignment.center,
-    child: BookImageWidget(
-      book: book,
-      height: imageHeight,
-    ),
+  bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+  Color solidColor = isDarkMode ? Colors.white : const Color.fromARGB(255, 48, 48, 48);
+  return Column(
+    children: [
+      Container(
+        height: imageHeight,
+        width: double.infinity,
+        alignment: Alignment.center,
+        child: BookImageWidget(
+          book: book,
+          height: imageHeight,
+        ),
+      ),
+      const SizedBox(height: 16),
+      Container(
+        width: double.infinity,
+        height: 2,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              solidColor.withOpacity(0.0),  
+              solidColor,                   
+              solidColor.withOpacity(0.0),  
+            ],
+            stops: const [0.0, 0.5, 1.0],
+          ),
+        ),
+      ),
+      const SizedBox(height: 16),
+      Text(
+        book.title,
+        style: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).textTheme.bodyLarge?.color,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    ],
   );
 }
 
