@@ -1,9 +1,9 @@
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart'; 
+import 'package:flutter/foundation.dart';
+import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 
 import '/services/GoogleBooksService.dart';
-import 'addBookScreen.dart';
+import 'BookFormScreen.dart';
 import '../widgets/CustomAppBar.dart';
 
 class IsbnScanScreen extends StatefulWidget {
@@ -25,85 +25,72 @@ class IsbnScanScreen extends StatefulWidget {
 }
 
 class _IsbnScanScreenState extends State<IsbnScanScreen> {
-  CameraController? _controller;
-  Future<void>? _initializeControllerFuture;
   final TextEditingController _isbnController = TextEditingController();
-  String? _scannedIsbn;
-
   final GoogleBooksService _googleBooksService = GoogleBooksService();
 
-   @override
-  void initState() {
-    super.initState();
-    if (!kIsWeb) { 
-      _initializeCamera();
-    }
-  }
-
-
-  Future<void> _initializeCamera() async {
-    final cameras = await availableCameras();
-    if (cameras.isNotEmpty) {
-      final firstCamera = cameras.first;
-      _controller = CameraController(
-        firstCamera,
-        ResolutionPreset.medium,
+  Future<void> _scanBarcode() async {
+    try {
+      String barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+        '#ff6666',
+        'Cancel',
+        true,
+        ScanMode.BARCODE,
       );
-      _initializeControllerFuture = _controller!.initialize();
-    }
-  }
 
-  @override
-  void dispose() {
-    _controller?.dispose();
-    _isbnController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _scanISBN() async {
-    if (_controller != null) {
-      final image = await _controller!.takePicture();
-
-      // TODO: Implement actual ISBN scanning from image
-
-      // Placeholder ISBN for testing
-      setState(() {
-        _scannedIsbn = '978-3-16-148410-0';
-      });
-
-      if (_scannedIsbn != null) {
-        _fetchBookDetails(_scannedIsbn!);
+      if (barcodeScanRes != '-1') { 
+        _fetchBookDetails(barcodeScanRes);
       }
+    } catch (e) {
+      print('Failed to scan barcode: $e');
+      _showErrorDialog('Failed to scan barcode: $e');
     }
   }
 
   Future<void> _fetchBookDetails(String isbn) async {
-  try {
-    final book = await _googleBooksService.getBookByISBN(
-      isbn,
-      widget.googleBooksApiKey,
-    );
+    try {
+      final book = await _googleBooksService.getBookByISBN(
+        isbn,
+        widget.googleBooksApiKey,
+      );
 
-    if (book != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-        builder: (context) => AddBookScreen(
-          collectionId: widget.collectionId,
-          googleBooksApiKey: widget.googleBooksApiKey,
-          initialBook: book,
-          isDarkMode: widget.isDarkMode,
-          onThemeToggle: widget.onThemeToggle,
-        ),
+      if (book != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BookFormScreen(
+              collectionId: widget.collectionId,
+              googleBooksApiKey: widget.googleBooksApiKey,
+              book: book,
+              isDarkMode: widget.isDarkMode,
+              onThemeToggle: widget.onThemeToggle,
+              mode: FormMode.add,
+            ),
+          ),
+        );
+      } else {
+        _showBookNotFoundErrorDialog(isbn);
+      }
+    } catch (e) {
+      print("Error fetching book details: $e");
+      _showErrorDialog("Error fetching book details: $e");
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Error"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text("OK"),
+          ),
+        ],
       ),
     );
-    } else {
-      _showBookNotFoundErrorDialog(isbn);
-    }
-  } catch (e) {
-    print("Error fetching book details: $e");
   }
-}
 
   void _showBookNotFoundErrorDialog(String isbn) {
     showDialog(
@@ -121,81 +108,47 @@ class _IsbnScanScreenState extends State<IsbnScanScreen> {
     );
   }
 
-   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-      title: 'Scan ISBN',
-      isDarkMode: widget.isDarkMode,
-      onThemeToggle: widget.onThemeToggle,
-    ),
-      body:  
-         kIsWeb  
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.no_photography,
-                    size: 64.0,
-                    color: Colors.grey,
-                  ),
-                  const SizedBox(height: 16.0),
-                  const Text(
-                    'ISBN scanning is not available on the web.',
-                    textAlign: TextAlign.center,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: TextField(
-                      controller: _isbnController,
-                      decoration: const InputDecoration(
-                        labelText: 'Enter ISBN manually',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _scannedIsbn = _isbnController.text;
-                      });
-                      if (_scannedIsbn != null) {
-                        _fetchBookDetails(_scannedIsbn!);
-                      }
-                    },
-                    child: const Text('Find Book'),
-                  ),
-                ],
-              ),
-            )
-          : _controller != null
-              ? FutureBuilder<void>(
-                  future: _initializeControllerFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.done) {
-                      return Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          CameraPreview(_controller!),
-                          Positioned(
-                            bottom: 20.0,
-                            child: ElevatedButton(
-                              onPressed: _scanISBN,
-                              child: const Text('Scan'),
-                            ),
-                          ),
-                        ],
-                      );
-                    } else {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                  },
-                )
-              : const Center(
-                  child: Text('Camera initialization failed.'),
+        title: 'Scan ISBN',
+        isDarkMode: widget.isDarkMode,
+        onThemeToggle: widget.onThemeToggle,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextField(
+                controller: _isbnController,
+                decoration: const InputDecoration(
+                  labelText: 'Enter ISBN manually',
+                  border: OutlineInputBorder(),
                 ),
+                keyboardType: TextInputType.number,
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  if (_isbnController.text.isNotEmpty) {
+                    _fetchBookDetails(_isbnController.text);
+                  }
+                },
+                child: const Text('Find Book'),
+              ),
+              SizedBox(height: 20),
+              if (!kIsWeb)
+                ElevatedButton(
+                  onPressed: _scanBarcode,
+                  child: const Text('Scan ISBN Barcode'),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
