@@ -1,38 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../widgets/CustomAppBar.dart';
-import '../widgets/dialogs/AddCollectionDialog.dart';
-import '../widgets/dialogs/DeleteCollectionDialog.dart';
+import '../widgets/custom_app_bar.dart';
+import '../widgets/dialogs/add_collection_dialog.dart';
+import '../widgets/dialogs/delete_collection_dialog.dart';
+import '../services/theme_provider.dart';
+import '../widgets/action_button.dart';
 
 class HomeScreen extends StatelessWidget {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final bool isDarkMode;
-  final VoidCallback onThemeToggle;
 
-  HomeScreen({
-    Key? key,
-    required this.isDarkMode,
-    required this.onThemeToggle,
-  }) : super(key: key);
+  HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final User? user = _auth.currentUser;
-    return Scaffold(
-      appBar: CustomAppBar(
-        title: 'My Collections',
-        isDarkMode: isDarkMode,
-        onThemeToggle: onThemeToggle,
-      ),
-      body: _buildBody(context, user),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddCollectionDialog(context),
-        child: const Icon(Icons.add),
-        backgroundColor: Theme.of(context).colorScheme.secondary,
-      ),
-    );
+Widget build(BuildContext context) {
+  final User? user = _auth.currentUser;
+  ThemeProvider.of(context);
+  return Scaffold(
+    appBar: CustomAppBar(
+      title: 'My Collections',
+      onBackPressed: () => _handleBackPress(context),
+    ),
+    body: _buildBody(context, user),
+    floatingActionButton: ActionButton(
+      onPressed: () => _showAddCollectionDialog(context),
+      tooltip: 'Add new collection',
+      child: const Icon(Icons.add),
+    ),
+  );
+}
+
+  void _handleBackPress(BuildContext context) {
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Log Out'),
+            content: const Text('Do you want to log out?'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () {
+                  Navigator.of(context).pop(); 
+                },
+              ),
+              TextButton(
+                child: const Text('Log Out'),
+                onPressed: () {
+                  _auth.signOut();
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pushReplacementNamed('/login');
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      Navigator.of(context).pop();
+    }
   }
 
   Widget _buildBody(BuildContext context, User? user) {
@@ -87,7 +116,7 @@ class HomeScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AddCollectionDialog(isDarkMode: isDarkMode);
+        return const AddCollectionDialog();
       },
     );
   }

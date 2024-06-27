@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class AppTheme {
   static final lightTheme = ThemeData(
     brightness: Brightness.light,
-    primaryColor: Colors.blue,
+    primaryColor: const Color.fromARGB(255, 203, 232, 255),
     scaffoldBackgroundColor: Colors.white,
     textTheme: const TextTheme(
       bodyLarge: TextStyle(color: Colors.black),
@@ -11,7 +11,7 @@ class AppTheme {
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: Color.fromARGB(255, 172, 172, 172),
+        backgroundColor: const Color.fromARGB(255, 172, 172, 172),
         foregroundColor: Colors.white,
       ),
     ),

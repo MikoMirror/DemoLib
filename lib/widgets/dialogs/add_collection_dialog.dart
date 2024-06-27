@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
-import '../../services/FirestoreService.dart';
-import '../StylizedTextField.dart';
-import '../StylizedButton.dart';
+import '../../services/firestore_service.dart';
+import '../stylized_text_field.dart';
+import '../stylized_button.dart';
+import '../../services/theme_provider.dart';
 
 class AddCollectionDialog extends StatefulWidget {
-  final bool isDarkMode;
-
-  const AddCollectionDialog({Key? key, required this.isDarkMode}) : super(key: key);
+  const AddCollectionDialog({super.key});
 
   @override
-  _AddCollectionDialogState createState() => _AddCollectionDialogState();
+  State<AddCollectionDialog> createState() => _AddCollectionDialogState();
 }
 
 class _AddCollectionDialogState extends State<AddCollectionDialog> {
@@ -37,6 +36,8 @@ class _AddCollectionDialogState extends State<AddCollectionDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = ThemeProvider.of(context);
+    final isDarkMode = themeProvider.isDarkMode;
     return AlertDialog(
       title: Text('Add Collection', style: Theme.of(context).textTheme.headlineSmall),
       content: Form(
@@ -60,7 +61,7 @@ class _AddCollectionDialogState extends State<AddCollectionDialog> {
       ),
       actions: [
         TextButton(
-          child: Text('Cancel', style: TextStyle(color: widget.isDarkMode ? Colors.white : Colors.black)),
+          child: Text('Cancel', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
           onPressed: () => Navigator.of(context).pop(),
         ),
         StylizedButton(
@@ -68,7 +69,7 @@ class _AddCollectionDialogState extends State<AddCollectionDialog> {
           text: 'Add Collection',
         ),
       ],
-      backgroundColor: widget.isDarkMode ? Colors.grey[800] : Colors.white,
+      backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
     );
   }
 }

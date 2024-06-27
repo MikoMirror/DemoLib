@@ -7,10 +7,10 @@ class DeleteCollectionDialog extends StatelessWidget {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   DeleteCollectionDialog({
-    Key? key,
+    super.key,
     required this.userId,
     required this.collectionId,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

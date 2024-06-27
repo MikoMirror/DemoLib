@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import '../StylizedButton.dart';
+import '../stylized_button.dart';
 
 class AddBookDialog extends StatelessWidget {
   final Function() onManualAdd;
   final Function() onIsbnScan;
 
   const AddBookDialog({
-    Key? key,
+    super.key,
     required this.onManualAdd,
     required this.onIsbnScan,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

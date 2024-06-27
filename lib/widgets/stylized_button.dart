@@ -9,37 +9,40 @@ class StylizedButton extends StatelessWidget {
   final Color? foregroundColor;
 
   const StylizedButton({
-    Key? key,
+    super.key,
     required this.onPressed,
     required this.text,
     this.width,
     this.height,
     this.backgroundColor,
     this.foregroundColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: width ?? 200, 
+      width: width ?? 200,
       height: height ?? 50,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          foregroundColor: foregroundColor ?? Theme.of(context).colorScheme.onPrimary,
-          backgroundColor: backgroundColor ?? Theme.of(context).colorScheme.primary,
+          foregroundColor: foregroundColor ?? Colors.white,
+          backgroundColor: backgroundColor ?? Colors.purple[600],
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
           elevation: 3,
-          alignment: Alignment.center,
+          padding: EdgeInsets.zero, // Remove default padding
         ),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: foregroundColor ?? Theme.of(context).colorScheme.onPrimary,
+        child: Center( // Wrap the Text with Center widget
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: foregroundColor ?? Colors.white,
+            ),
+            textAlign: TextAlign.center, // Ensure text is centered
           ),
         ),
       ),

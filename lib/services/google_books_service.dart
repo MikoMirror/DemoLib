@@ -1,3 +1,4 @@
+// ignore_for_file: avoid_print
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -46,7 +47,7 @@ class GoogleBooksService {
     }
   }
 
-  String getOpenLibraryCoverUrl(String isbn, String size) {
+  static String getOpenLibraryCoverUrl(String isbn, String size) {
     return 'https://covers.openlibrary.org/b/isbn/$isbn-$size.jpg';
   }
 
@@ -67,19 +68,5 @@ class GoogleBooksService {
       print('Error parsing date: $e');
       return null;
     }
-  }
-
-  String? _extractIsbn(List<dynamic>? identifiers) {
-    if (identifiers == null) return null;
-    var isbn13 = identifiers.firstWhere(
-      (id) => id['type'] == 'ISBN_13',
-      orElse: () => null,
-    );
-    if (isbn13 != null) return isbn13['identifier'];
-    var isbn10 = identifiers.firstWhere(
-      (id) => id['type'] == 'ISBN_10',
-      orElse: () => null,
-    );
-    return isbn10 != null ? isbn10['identifier'] : null;
   }
 }

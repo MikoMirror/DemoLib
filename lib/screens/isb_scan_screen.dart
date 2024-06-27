@@ -1,27 +1,25 @@
+// ignore_for_file: avoid_print
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 
-import '/services/GoogleBooksService.dart';
-import 'BookFormScreen.dart';
-import '../widgets/CustomAppBar.dart';
+import '../services/google_books_service.dart';
+import 'book_form_screen.dart';
+import '../widgets/custom_app_bar.dart';
+import '../services/theme_provider.dart';
 
 class IsbnScanScreen extends StatefulWidget {
   final String collectionId;
   final String googleBooksApiKey;
-  final bool isDarkMode;
-  final VoidCallback onThemeToggle;
 
   const IsbnScanScreen({
     required this.collectionId,
     required this.googleBooksApiKey,
-    required this.isDarkMode,
-    required this.onThemeToggle,
     super.key,
   });
 
   @override
-  _IsbnScanScreenState createState() => _IsbnScanScreenState();
+  State<IsbnScanScreen> createState() => _IsbnScanScreenState();
 }
 
 class _IsbnScanScreenState extends State<IsbnScanScreen> {
@@ -36,8 +34,7 @@ class _IsbnScanScreenState extends State<IsbnScanScreen> {
         true,
         ScanMode.BARCODE,
       );
-
-      if (barcodeScanRes != '-1') { 
+      if (barcodeScanRes != '-1') {
         _fetchBookDetails(barcodeScanRes);
       }
     } catch (e) {
@@ -47,45 +44,45 @@ class _IsbnScanScreenState extends State<IsbnScanScreen> {
   }
 
   Future<void> _fetchBookDetails(String isbn) async {
-    try {
-      final book = await _googleBooksService.getBookByISBN(
-        isbn,
-        widget.googleBooksApiKey,
-      );
+  try {
+    final book = await _googleBooksService.getBookByISBN(
+      isbn,
+      widget.googleBooksApiKey,
+    );
+    if (!mounted) return; 
 
-      if (book != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BookFormScreen(
-              collectionId: widget.collectionId,
-              googleBooksApiKey: widget.googleBooksApiKey,
-              book: book,
-              isDarkMode: widget.isDarkMode,
-              onThemeToggle: widget.onThemeToggle,
-              mode: FormMode.add,
-            ),
+    if (book != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BookFormScreen(
+            collectionId: widget.collectionId,
+            googleBooksApiKey: widget.googleBooksApiKey,
+            book: book,
+            mode: FormMode.add,
           ),
-        );
-      } else {
-        _showBookNotFoundErrorDialog(isbn);
-      }
-    } catch (e) {
-      print("Error fetching book details: $e");
-      _showErrorDialog("Error fetching book details: $e");
+        ),
+      );
+    } else {
+      _showBookNotFoundErrorDialog(isbn);
     }
+  } catch (e) {
+    if (!mounted) return; 
+    print("Error fetching book details: $e");
+    _showErrorDialog("Error fetching book details: $e");
   }
+}
 
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Error"),
+        title: const Text("Error"),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text("OK"),
+            child: const Text("OK"),
           ),
         ],
       ),
@@ -110,11 +107,10 @@ class _IsbnScanScreenState extends State<IsbnScanScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ThemeProvider.of(context);
     return Scaffold(
-      appBar: CustomAppBar(
+      appBar: const CustomAppBar(
         title: 'Scan ISBN',
-        isDarkMode: widget.isDarkMode,
-        onThemeToggle: widget.onThemeToggle,
       ),
       body: Center(
         child: Padding(
@@ -130,7 +126,7 @@ class _IsbnScanScreenState extends State<IsbnScanScreen> {
                 ),
                 keyboardType: TextInputType.number,
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
                   if (_isbnController.text.isNotEmpty) {
@@ -139,7 +135,7 @@ class _IsbnScanScreenState extends State<IsbnScanScreen> {
                 },
                 child: const Text('Find Book'),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               if (!kIsWeb)
                 ElevatedButton(
                   onPressed: _scanBarcode,

@@ -30,7 +30,6 @@ class AuthLoginRequested extends AuthEvent {
 
 class AuthLogoutRequested extends AuthEvent {}
 
-// Events for internal use within the BLoC
 class AuthUserLoggedIn extends AuthEvent {
   final User user;
   const AuthUserLoggedIn({required this.user});
