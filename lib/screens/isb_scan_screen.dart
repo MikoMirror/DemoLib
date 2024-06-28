@@ -7,6 +7,8 @@ import '../services/google_books_service.dart';
 import 'book_form_screen.dart';
 import '../widgets/custom_app_bar.dart';
 import '../services/theme_provider.dart';
+import '../widgets/stylized_text_field.dart';
+import '../widgets/stylized_button.dart';
 
 class IsbnScanScreen extends StatefulWidget {
   final String collectionId;
@@ -106,45 +108,41 @@ class _IsbnScanScreenState extends State<IsbnScanScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    ThemeProvider.of(context);
-    return Scaffold(
-      appBar: const CustomAppBar(
-        title: 'Scan ISBN',
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextField(
-                controller: _isbnController,
-                decoration: const InputDecoration(
-                  labelText: 'Enter ISBN manually',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
+Widget build(BuildContext context) {
+  ThemeProvider.of(context);
+  return Scaffold(
+    appBar: const CustomAppBar(
+      title: 'Scan ISBN',
+    ),
+    body: Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+           StylizedTextField(
+              controller: _isbnController,
+              labelText: 'Enter ISBN manually',
+            ),
+            const SizedBox(height: 20),
+            StylizedButton(
+              onPressed: () {
+                if (_isbnController.text.isNotEmpty) {
+                  _fetchBookDetails(_isbnController.text);
+                }
+              },
+              text: 'Find Book',
+            ),
+            const SizedBox(height: 20),
+            if (!kIsWeb)
+              StylizedButton(
+                onPressed: _scanBarcode,
+                text: 'Scan ISBN Barcode',
               ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  if (_isbnController.text.isNotEmpty) {
-                    _fetchBookDetails(_isbnController.text);
-                  }
-                },
-                child: const Text('Find Book'),
-              ),
-              const SizedBox(height: 20),
-              if (!kIsWeb)
-                ElevatedButton(
-                  onPressed: _scanBarcode,
-                  child: const Text('Scan ISBN Barcode'),
-                ),
-            ],
-          ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

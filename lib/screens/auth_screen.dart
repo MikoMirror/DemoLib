@@ -22,7 +22,11 @@ class AuthScreen extends StatelessWidget {
             Navigator.pushReplacementNamed(context, '/home');
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 5),
+              ),
             );
           }
         },
@@ -42,65 +46,67 @@ class _LoginFormState extends State<_LoginForm> {
   final TextEditingController _passwordController = TextEditingController();
 
   @override
-Widget build(BuildContext context) {
-  return BlocBuilder<AuthBloc, AuthState>(
-    builder: (context, state) {
-      return SingleChildScrollView(
-        child: Container(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 50.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset(
-                  'assets/img/open-book.png',
-                  width: 100,
-                  height: 100,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  "Home Lib",
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+  Widget build(BuildContext context) {
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        return SingleChildScrollView(
+          child: Container(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 50.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/img/open-book.png',
+                    width: 100,
+                    height: 100,
                   ),
-                ),
-                const SizedBox(height: 40),
-                StylizedTextField(
-                  controller: _emailController,
-                  labelText: 'Email',
-                ),
-                const SizedBox(height: 20),
-                StylizedTextField(
-                  controller: _passwordController,
-                  labelText: 'Password',
-                  obscureText: true,
-                ),
-                const SizedBox(height: 30),
-                _buildLoginButton(context, state),
-                const SizedBox(height: 15),
-                _buildRegistrationLink(context),
-              ],
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Home Lib",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  StylizedTextField(
+                    controller: _emailController,
+                    labelText: 'Email',
+                  ),
+                  const SizedBox(height: 20),
+                  StylizedTextField(
+                    controller: _passwordController,
+                    labelText: 'Password',
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 30),
+                  _buildLoginButton(context, state),
+                  const SizedBox(height: 15),
+                  _buildRegistrationLink(context),
+                ],
+              ),
             ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   Widget _buildLoginButton(BuildContext context, AuthState state) {
     return state is AuthLoading
         ? const CircularProgressIndicator(color: Colors.white)
         : StylizedButton(
             onPressed: () {
-              context.read<AuthBloc>().add(
-                    AuthLoginRequested(
-                      _emailController.text,
-                      _passwordController.text,
-                    ),
-                  );
+              if (_validateInputs()) {
+                context.read<AuthBloc>().add(
+                      AuthLoginRequested(
+                        _emailController.text,
+                        _passwordController.text,
+                      ),
+                    );
+              }
             },
             text: 'Login',
           );
@@ -118,6 +124,28 @@ Widget build(BuildContext context) {
       child: Text(
         'Don\'t have an account? Register',
         style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+      ),
+    );
+  }
+
+  bool _validateInputs() {
+    if (_emailController.text.isEmpty) {
+      _showErrorSnackBar('Please enter your email.');
+      return false;
+    }
+    if (_passwordController.text.isEmpty) {
+      _showErrorSnackBar('Please enter your password.');
+      return false;
+    }
+    return true;
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
       ),
     );
   }

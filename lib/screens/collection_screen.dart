@@ -119,7 +119,7 @@ Widget build(BuildContext context) {
   );
 }
 
- Widget _buildBookCard(BuildContext context, Book book) {
+Widget _buildBookCard(BuildContext context, Book book) {
   return Builder(
     builder: (context) {
       final theme = Theme.of(context);
@@ -127,7 +127,7 @@ Widget build(BuildContext context) {
         elevation: 2,
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: InkWell(
-          onTap: () => _navigateToBookDetail(context, book), 
+          onTap: () => _navigateToBookDetail(context, book),
           child: Container(
             height: 180,
             padding: const EdgeInsets.all(8),
@@ -161,18 +161,27 @@ Widget build(BuildContext context) {
                           ),
                         ],
                       ),
-                      Text(book.author, style: theme.textTheme.bodyMedium?.copyWith(fontSize: 16.0)),
+                      Flexible(
+                        child: Text(
+                          book.author,
+                          style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14.0),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         'Pages: ${book.pageCount > 0 ? book.pageCount : 'Unknown'}',
-                        style: theme.textTheme.bodyMedium?.copyWith(fontSize: 13.0),
+                        style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12.0),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        book.description,
-                        style: theme.textTheme.bodyMedium?.copyWith(fontSize: 13.0),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                      const SizedBox(height: 4),
+                      Expanded(
+                        child: Text(
+                          book.description,
+                          style: theme.textTheme.bodyMedium?.copyWith(fontSize: 12.0),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),

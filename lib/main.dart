@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import '../services/firebase_options.dart';
-import '../screens/auth_screen.dart';
-import '../screens/home_screen.dart';
-import '../screens/book_form_screen.dart';
-import '../screens/collection_screen.dart';
-import '../blocs/auth_bloc.dart';
-import '../services/theme_provider.dart';
-import '../services/app_theme.dart';
+import 'services/firebase_options.dart';
+import 'screens/auth_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/book_form_screen.dart';
+import 'screens/collection_screen.dart';
+import 'blocs/auth_bloc.dart';
+import 'services/theme_provider.dart';
+import 'services/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
