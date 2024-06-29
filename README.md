@@ -1,3 +1,7 @@
-# flutterlibdata
+# Home-Lib
 
-A new Flutter project.
+ A simple application for cataloging a home library.
+
+
+
+
